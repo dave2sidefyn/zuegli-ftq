@@ -1,37 +1,11 @@
 {% extends "main/base.html" %}
 {% load static crispy_forms_tags i18n %}
 
-{% block title %}{% trans "Home" %}{% endblock %}
+{% block title %}{% trans "QR Scanner" %}{% endblock %}
 
 {% block content %}
     <div class="govuk-width-container">
-        <h1 class="govuk-heading-xl">Zügli</h1>
-        <p class="govuk-body-l">
-            {% trans "Turn your public transport tickets into Apple/Google Wallet passes." %}
-        </p>
-        <p class="govuk-body">
-            {% trans "Supported ticket types include:" %}
-        </p>
-        <ul class="govuk-list govuk-list--bullet">
-            <li>{% trans "VDV - German local transport operators, Deutschlandticket" %}</li>
-            <li>{% trans "UIC - Deutsche Bahn, NS, ÖBB and other long-distance operators, Klimaticket, InterRail" %}</li>
-            <li>{% trans "SSB - Select long-distance operators (e.g. SNCB, VR), NS/DB Keycards" %}</li>
-            <li>{% trans "RSP6 - UK train tickets" %}</li>
-            <li>{% trans "RSP8 - UK Railcards" %}</li>
-            <li>{% trans "SNCF domestic tickets" %}</li>
-            <li>{% trans "ELB - Eurostar" %}</li>
-            <li>{% trans "SwissPass/NOVA - SBB, ZVV, and other Swiss operators (VöV)" %}</li>
-            <li>{% trans "HŽPP tickets" %}</li>
-            <li>{% trans "IATA Barcoded Boarding Pass" %}</li>
-            <li>{% trans "BahnBonus vouchers and lounge access codes" %}</li>
-            <li>{% trans "MBTA mTickets" %}</li>
-        </ul>
-        <p class="govuk-body">
-            {% blocktrans trimmed %}
-                If you want your tickets to automatically update when they are renewed you can create an account and add
-                the subscription. Currently, DB, SaarVV, S-Bahn Berlin, AVV (Aachen), MVV, and HVV Switch are supported.
-            {% endblocktrans %}
-        </p>
+        <h1 class="govuk-heading-xl">QR Code Scanner</h1>
 
         {% if error %}
             <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -69,8 +43,7 @@
                     <div class="govuk-error-summary__body">
                         <p class="govuk-body">
                             {% blocktrans trimmed %}
-                                JavaScript is required to scan tickets in your browser.
-                                You can still upload a picture of your ticket to have it processed server-side.
+                                JavaScript is required to scan QR codes in your browser.
                             {% endblocktrans %}
                         </p>
                     </div>
@@ -78,15 +51,7 @@
             </div>
         </noscript>
 
-        <button id="scan-button" class="govuk-button govuk-button--start" disabled>
-            {% trans "Scan your ticket" %}
-            <svg class="govuk-button__start-icon" xmlns="http://www.w3.org/2000/svg" width="17.5" height="19"
-                 viewBox="0 0 33 40" aria-hidden="true" focusable="false">
-                <path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z"></path>
-            </svg>
-        </button>
-
-        <div id="video-container" style="display: none;" class="govuk-!-margin-bottom-4">
+        <div id="video-container" class="govuk-!-margin-bottom-4">
             <div id="barkoder-container" style="width: 100%; height: 450px;"></div>
         </div>
 
@@ -96,146 +61,8 @@
             <input type="hidden" name="ticket_hex" id="data">
         </form>
 
-        <p class="govuk-body">
-            {% blocktrans trimmed %}
-                If you're having trouble scanning your ticket uploading a picture/screenshot of your ticket usually
-                works better. The decoder on the server is better than the one in your browser.
-            {% endblocktrans %}
-        </p>
-
-        <h2 class="govuk-heading-l">{% trans "Upload a picture or a PDF instead" %}</h2>
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div class="govuk-form-group{% if image_form.ticket.errors %} govuk-form-group--error{% endif %}">
-                <label class="govuk-label" for="ticket-file">
-                    {% trans "Your ticket" %}
-                </label>
-                {% if image_form.ticket.errors %}
-                    <p class="govuk-error-message">
-                        {% for error in image_form.ticket.errors %}
-                            {{ error }}
-                            {% if not forloop.last %}<br/>{% endif %}
-                        {% endfor %}
-                    </p>
-                {% endif %}
-                <div class="govuk-drop-zone" data-module="govuk-file-upload">
-                    <input class="govuk-file-upload" id="ticket-file" name="ticket" type="file" required>
-                </div>
-            </div>
-            <input type="submit" name="submit" value="{% trans "Upload" %}" class="govuk-button">
-        </form>
-
-        <h2 class="govuk-heading-l">{% trans "Paste your ticket as hex/text" %}</h2>
-        <form action="" method="post">
-            {% csrf_token %}
-            <input type="hidden" name="type" value="text">
-            <div id="div_id_ticket" class="govuk-form-group">
-                <label for="ticket_paste" class="govuk-label">{% trans "Your ticket" %}</label>
-                <input type="text" name="ticket_text" id="ticket_paste" required class="govuk-input">
-            </div>
-            <button type="submit" class="govuk-button">{% trans "Submit" %}</button>
-        </form>
-
-        <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
-
-        <h2 class="govuk-heading-l">{% trans "Have your ticket on a Smartcard?" %}</h2>
-        <p class="govuk-body-lead">
-            {% blocktrans trimmed %}
-                VDV-KA (German) Smartcards can also be read, click below to start.
-            {% endblocktrans %}
-        </p>
-        <p class="govuk-body">
-            {% blocktrans trimmed %}
-                Currently, it is not possible to convert Smartcard tickets to Wallet passes.
-            {% endblocktrans %}
-        </p>
-
-        <a href="{% url 'vdv_read' %}" class="govuk-button govuk-button--start">
-            {% trans "Read your Smartcard" %}
-            <svg class="govuk-button__start-icon" xmlns="http://www.w3.org/2000/svg" width="17.5" height="19"
-                 viewBox="0 0 33 40" aria-hidden="true" focusable="false">
-                <path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z"></path>
-            </svg>
-        </a>
-
-        <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
-
-        <h3 class="govuk-heading-m">{% trans "Not working?" %}</h3>
-        <p class="govuk-body">
-            {% blocktrans trimmed %}
-                Get in touch with a picture of your ticket and I'll see what I can do.
-            {% endblocktrans %}
-        </p>
-        <ul class="govuk-list govuk-inset-text">
-            <li>Fedi: <a href="https://glauca.space/@q" class="govuk-link">@q@glauca.space</a></li>
-            <li>Email: <a href="mailto:q@magicalcodewit.ch" class="govuk-link">q@magicalcodewit.ch</a></li>
-        </ul>
-        <h3 class="govuk-heading-m">{% trans "Privacy" %}</h3>
-        <p class="govuk-body">
-            {% blocktrans trimmed %}
-                Your ticket barcode will be stored to allow automatic updates to subscription tickets.
-                Tickets commonly include your name and date of birth - this information is not processed except to
-                generate the pass. Ticket data may be inspected by a human if you ask for help.
-            {% endblocktrans %}
-        </p>
-
-        <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
-
-        <h3 class="govuk-heading-m">{% trans "API" %}</h3>
-        <p class="govuk-body">
-            {% blocktrans trimmed %}
-                You can send scanned Aztec barcode contents to this service's API and retrieve PKPass files from it.
-            {% endblocktrans %}
-        </p>
-        <details class="govuk-details">
-            <summary class="govuk-details__summary">
-                <span class="govuk-details__summary-text">{% trans "API details" %}</span>
-            </summary>
-            <div class="govuk-details__text">
-                <h4 class="govuk-heading-s"><code>POST /api/upload</code></h4>
-                <pre><code>Content-Type: application/json
-
-{
-    "barcode_data": "&lt;base64 encoded aztec contents>"
-}
-
----
-
-200 OK
-Content-Type: application/json
-
-{
-    "ticket_id": "EXAMPLE_ID",
-    "access_token": "EXAMPLE_TOKEN"
-}
-
----
-
-422 Unprocessable Entity
-Content-Type: application/json
-
-{
-    "title": "Invalid barcode",
-    "message": "This doesn't look like a valid ticket"
-}</code></pre>
-
-                <h4 class="govuk-heading-s"><code>GET
-                    /api/apple/v1/passes/pass.ch.magicalcodewit.vdv.ticket/EXAMPLE_ID</code></h4>
-                <pre><code>Authorization: ApplePass EXAMPLE_TOKEN
-
----
-
-200 OK
-Content-Type: application/vnd.apple.pkpass
-Content-Disposition: attachment; filename="EXAMPLE_ID.pkpass"
-
-Pass Contents</code></pre>
-            </div>
-        </details>
-
         <script>
             async function barkoderInit() {
-                const scanButton = document.getElementById("scan-button");
                 const videoContainer = document.getElementById("video-container");
 
                 var Barkoder = await BarkoderSDK.initialize("PEmBIohr9EZXgCkySoetbwP4gvOfMcGzgxKPL2X6uqOYS_kq3Dg29ETQUylj0B7tX0Qjf7OADh49UOuXd3lLay9853Akr1i-RGjOaTUVnYXgcwJWDlQCw_hdEoq8mlpW6kE-OCxLu1sGWWMK2cxflKL4Dgvjdq1BbCIZxwsuRb2EqVTF0JY2DkwXSr4Fi565lAIMd6_gBbiQyuOnj_zXYTFyR4N1z9k_1kB2PBw_12mdDPzmCvSLqq4Qsi6d3qX8oPzRxiDyWvtIPtfLi4YEiAms3M9VRe5pPAfo2t6gyEROJZoro2CplVYGQkMjIHj9wbHncqy3yRQkl33aJwfNiD8aRtiAgdfGu6t9kKZaVV5awqnjqXZDhjdkYdxyRLjK_sd6Zv9rJrUmKFvO3aqu-gVhDLFjqY2vtV6qhyQuoU0.");
@@ -254,44 +81,40 @@ Pass Contents</code></pre>
                 Barkoder.setCloseEnabled(false);
                 Barkoder.setContinuous(false);
 
-                scanButton.addEventListener('click', function () {
-                    videoContainer.style.display = "block";
-                    Barkoder.startScanner(function (result) {
-                        Barkoder.stopScanner();
-                        videoContainer.style.display = "none";
-
-                        if (result.barcodeTypeName === "QR") {
-                            if (result.binaryData.every(function (n) {
-                                return n >= 0x20 && n < 0x7f;
-                            })) {
-                                submitResult(result);
-                            } else {
-                                const canvas = document.createElement("canvas");
-                                canvas.width = result.capturedFrame.width;
-                                canvas.height = result.capturedFrame.height;
-                                const ctx = canvas.getContext("2d");
-                                ctx.putImageData(result.capturedFrame, 0, 0);
-                                const dataURL = canvas.toDataURL("image/png");
-
-                                Barkoder.setEncodingCharacterSet(Barkoder.constants.EncodingCharacterSet.BINARY);
-                                Barkoder.scanImage(dataURL, function (newResult) {
-                                    if (newResult.resultsCount) {
-                                        submitResult(newResult);
-                                    } else {
-                                        submitResult(result);
-                                    }
-                                }, function (err) {
-                                    console.log(err);
-                                    submitResult(result);
-                                });
-                            }
-                        } else {
+                // Auto-start the scanner when page loads
+                videoContainer.style.display = "block";
+                Barkoder.startScanner(function (result) {
+                    Barkoder.stopScanner();
+                    
+                    if (result.barcodeTypeName === "QR") {
+                        if (result.binaryData.every(function (n) {
+                            return n >= 0x20 && n < 0x7f;
+                        })) {
                             submitResult(result);
-                        }
-                    });
-                });
+                        } else {
+                            const canvas = document.createElement("canvas");
+                            canvas.width = result.capturedFrame.width;
+                            canvas.height = result.capturedFrame.height;
+                            const ctx = canvas.getContext("2d");
+                            ctx.putImageData(result.capturedFrame, 0, 0);
+                            const dataURL = canvas.toDataURL("image/png");
 
-                scanButton.disabled = false;
+                            Barkoder.setEncodingCharacterSet(Barkoder.constants.EncodingCharacterSet.BINARY);
+                            Barkoder.scanImage(dataURL, function (newResult) {
+                                if (newResult.resultsCount) {
+                                    submitResult(newResult);
+                                } else {
+                                    submitResult(result);
+                                }
+                            }, function (err) {
+                                console.log(err);
+                                submitResult(result);
+                            });
+                        }
+                    } else {
+                        submitResult(result);
+                    }
+                });
             }
 
             function submitResult(result) {
