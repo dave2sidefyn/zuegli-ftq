@@ -34,33 +34,11 @@
 {% endblock body_start %}
 <header class="govuk-header govuk-header--full-width-border" data-module="govuk-header">
     <div class="govuk-header__container govuk-width-container">
-        <div class="govuk-service-navigation__container" style="justify-content: space-between;">
+        <div class="govuk-service-navigation__container">
             <a href="{% url 'index' %}" class="govuk-header__link govuk-header__service-name"
                style="align-self: center">
                 FTQoin
             </a>
-            <form action="{% url 'set_language' %}" method="post">
-                {% csrf_token %}
-                <input name="next" type="hidden" value="{{ redirect_to }}">
-                {% get_current_language as LANGUAGE_CODE %}
-                {% get_available_languages as LANGUAGES %}
-                {% get_language_info_list for LANGUAGES as languages %}
-                <nav class="govuk-service-navigation__wrapper" data-module="govuk-service-navigation">
-                    <button type="button"
-                            class="govuk-service-navigation__toggle button-link govuk-js-service-navigation-toggle"
-                            aria-controls="languages-list" hidden>
-                        {% trans "Language" %}
-                    </button>
-                    <ul class="govuk-service-navigation__list" id="languages-list">
-                        {% for language in languages %}
-                            <li class="govuk-service-navigation__item{% if language.code == LANGUAGE_CODE %} govuk-service-navigation__item--active{% endif %}">
-                                <button class="button-link" type="submit" name="language"
-                                        value="{{ language.code }}">{{ language.name_local }}</button>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </nav>
-            </form>
         </div>
     </div>
 </header>
