@@ -143,6 +143,11 @@ def index(request):
     })
 
 
+def settings(request):
+    """Settings page for managing products"""
+    return render(request, "main/settings.html")
+
+
 def view_ticket(request, pk):
     ticket_obj = get_object_or_404(models.Ticket, id=pk)
     ticket_url = f"{settings.EXTERNAL_URL_BASE}{reverse('ticket', args=[ticket_obj.id])}"
