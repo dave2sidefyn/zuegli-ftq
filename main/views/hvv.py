@@ -14,7 +14,7 @@ def hvv_login(request):
         form = forms.EOSLoginForm(request.POST)
         if form.is_valid():
             r = niquests.get("https://api.hochbahn.cloud/auth/token", auth=(
-                f"{settings.HVV_APPLICATION_KEY}/{form.cleaned_data["username"]}", form.cleaned_data["password"]
+                f"{settings.HVV_APPLICATION_KEY}/{form.cleaned_data['username']}", form.cleaned_data["password"]
             ))
             if r.status_code != 200:
                 messages.error(request, "Login failed")
