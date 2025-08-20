@@ -68,57 +68,69 @@
         <script>
             async function barkoderInit() {
                 const videoContainer = document.getElementById("video-container");
+                const cameraStatus = document.getElementById("camera-status");
 
-                var Barkoder = await BarkoderSDK.initialize("PEmBIohr9EZXgCkySoetbwP4gvOfMcGzgxKPL2X6uqOYS_kq3Dg29ETQUylj0B7tX0Qjf7OADh49UOuXd3lLay9853Akr1i-RGjOaTUVnYXgcwJWDlQCw_hdEoq8mlpW6kE-OCxLu1sGWWMK2cxflKL4Dgvjdq1BbCIZxwsuRb2EqVTF0JY2DkwXSr4Fi565lAIMd6_gBbiQyuOnj_zXYTFyR4N1z9k_1kB2PBw_12mdDPzmCvSLqq4Qsi6d3qX8oPzRxiDyWvtIPtfLi4YEiAms3M9VRe5pPAfo2t6gyEROJZoro2CplVYGQkMjIHj9wbHncqy3yRQkl33aJwfNiD8aRtiAgdfGu6t9kKZaVV5awqnjqXZDhjdkYdxyRLjK_sd6Zv9rJrUmKFvO3aqu-gVhDLFjqY2vtV6qhyQuoU0.");
+                try {
+                    var Barkoder = await BarkoderSDK.initialize("PEmBIohr9EZXgCkySoetbwP4gvOfMcGzgxKPL2X6uqOYS_kq3Dg29ETQUylj0B7tX0Qjf7OADh49UOuXd3lLay9853Akr1i-RGjOaTUVnYXgcwJWDlQCw_hdEoq8mlpW6kE-OCxLu1sGWWMK2cxflKL4Dgvjdq1BbCIZxwsuRb2EqVTF0JY2DkwXSr4Fi565lAIMd6_gBbiQyuOnj_zXYTFyR4N1z9k_1kB2PBw_12mdDPzmCvSLqq4Qsi6d3qX8oPzRxiDyWvtIPtfLi4YEiAms3M9VRe5pPAfo2t6gyEROJZoro2CplVYGQkMjIHj9wbHncqy3yRQkl33aJwfNiD8aRtiAgdfGu6t9kKZaVV5awqnjqXZDhjdkYdxyRLjK_sd6Zv9rJrUmKFvO3aqu-gVhDLFjqY2vtV6qhyQuoU0.");
 
-                Barkoder.setEnabledDecoders(
-                    Barkoder.constants.Decoders.Aztec,
-                    Barkoder.constants.Decoders.AztecCompact,
-                    Barkoder.constants.Decoders.QR,
-                    Barkoder.constants.Decoders.QRMicro,
-                    Barkoder.constants.Decoders.PDF417,
-                    Barkoder.constants.Decoders.PDF417Micro,
-                );
-                Barkoder.setCameraResolution(Barkoder.constants.CameraResolution.FHD);
-                Barkoder.setDecodingSpeed(Barkoder.constants.DecodingSpeed.Normal);
-                Barkoder.setScannerTimeout(0);
-                Barkoder.setCloseEnabled(false);
-                Barkoder.setContinuous(false);
+                    Barkoder.setEnabledDecoders(
+                        Barkoder.constants.Decoders.Aztec,
+                        Barkoder.constants.Decoders.AztecCompact,
+                        Barkoder.constants.Decoders.QR,
+                        Barkoder.constants.Decoders.QRMicro,
+                        Barkoder.constants.Decoders.PDF417,
+                        Barkoder.constants.Decoders.PDF417Micro,
+                    );
+                    Barkoder.setCameraResolution(Barkoder.constants.CameraResolution.FHD);
+                    Barkoder.setDecodingSpeed(Barkoder.constants.DecodingSpeed.Normal);
+                    Barkoder.setScannerTimeout(0);
+                    Barkoder.setCloseEnabled(false);
+                    Barkoder.setContinuous(false);
 
-                // Auto-start the scanner when page loads
-                videoContainer.style.display = "block";
-                Barkoder.startScanner(function (result) {
-                    Barkoder.stopScanner();
-                    
-                    if (result.barcodeTypeName === "QR") {
-                        if (result.binaryData.every(function (n) {
-                            return n >= 0x20 && n < 0x7f;
-                        })) {
-                            submitResult(result);
-                        } else {
-                            const canvas = document.createElement("canvas");
-                            canvas.width = result.capturedFrame.width;
-                            canvas.height = result.capturedFrame.height;
-                            const ctx = canvas.getContext("2d");
-                            ctx.putImageData(result.capturedFrame, 0, 0);
-                            const dataURL = canvas.toDataURL("image/png");
+                    // Update status message
+                    cameraStatus.innerHTML = '<p>🔍 <strong>QR Scanner Ready</strong></p><p><small>Point your camera at a QR code to scan</small></p>';
 
-                            Barkoder.setEncodingCharacterSet(Barkoder.constants.EncodingCharacterSet.BINARY);
-                            Barkoder.scanImage(dataURL, function (newResult) {
-                                if (newResult.resultsCount) {
-                                    submitResult(newResult);
-                                } else {
-                                    submitResult(result);
-                                }
-                            }, function (err) {
-                                console.log(err);
+                    // Auto-start the scanner when page loads
+                    videoContainer.style.display = "block";
+                    Barkoder.startScanner(function (result) {
+                        Barkoder.stopScanner();
+                        
+                        // Update status on successful scan
+                        cameraStatus.innerHTML = '<p>✅ <strong>QR Code Detected!</strong></p><p><small>Processing...</small></p>';
+                        
+                        if (result.barcodeTypeName === "QR") {
+                            if (result.binaryData.every(function (n) {
+                                return n >= 0x20 && n < 0x7f;
+                            })) {
                                 submitResult(result);
-                            });
+                            } else {
+                                const canvas = document.createElement("canvas");
+                                canvas.width = result.capturedFrame.width;
+                                canvas.height = result.capturedFrame.height;
+                                const ctx = canvas.getContext("2d");
+                                ctx.putImageData(result.capturedFrame, 0, 0);
+                                const dataURL = canvas.toDataURL("image/png");
+
+                                Barkoder.setEncodingCharacterSet(Barkoder.constants.EncodingCharacterSet.BINARY);
+                                Barkoder.scanImage(dataURL, function (newResult) {
+                                    if (newResult.resultsCount) {
+                                        submitResult(newResult);
+                                    } else {
+                                        submitResult(result);
+                                    }
+                                }, function (err) {
+                                    console.log(err);
+                                    submitResult(result);
+                                });
+                            }
+                        } else {
+                            submitResult(result);
                         }
-                    } else {
-                        submitResult(result);
-                    }
-                });
+                    });
+                } catch (error) {
+                    console.error('Error initializing camera:', error);
+                    cameraStatus.innerHTML = '<p>❌ <strong>Camera Error</strong></p><p><small>Please check camera permissions and try refreshing the page</small></p>';
+                }
             }
 
             function submitResult(result) {
