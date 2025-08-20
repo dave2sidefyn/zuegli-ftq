@@ -1,11 +1,11 @@
 {% extends "main/base.html" %}
 {% load static crispy_forms_tags i18n %}
 
-{% block title %}{% trans "QR Scanner" %}{% endblock %}
+{% block title %}{% trans "FTQoin Scanner" %}{% endblock %}
 
 {% block content %}
     <div class="govuk-width-container">
-        <h1 class="govuk-heading-xl">QR Code Scanner</h1>
+        <h1 class="govuk-heading-xl">FTQoin Scanner</h1>
 
         {% if error %}
             <div class="govuk-error-summary" data-module="govuk-error-summary">
@@ -13,22 +13,6 @@
                     <h2 class="govuk-error-summary__title">{{ error.title }}</h2>
                     <div class="govuk-error-summary__body">
                         <p class="govuk-body">{{ error.message }}</p>
-                        {% if error.exception %}
-                            <details class="govuk-details">
-                                <summary class="govuk-details__summary">
-                                    <span class="govuk-details__summary-text">{% trans "Full exception" %}</span>
-                                </summary>
-                                <div class="govuk-details__text">
-                                    <pre style="overflow-x: auto;font-size: 1rem;">{{ error.exception }}</pre>
-                                </div>
-                            </details>
-                        {% endif %}
-                        {% if error.ticket_contents %}
-                            <p class="govuk-body-s">
-                                {% trans "Ticket contents; please send this when asking for support:" %}<br/>
-                                <code style="line-break: anywhere;">{{ error.ticket_contents }}</code>
-                            </p>
-                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -38,12 +22,12 @@
             <div class="govuk-error-summary" data-module="govuk-error-summary" id="error-banner">
                 <div role="alert">
                     <h2 class="govuk-error-summary__title">
-                        {% trans "JavaScript is required to scan tickets" %}
+                        {% trans "JavaScript is required" %}
                     </h2>
                     <div class="govuk-error-summary__body">
                         <p class="govuk-body">
                             {% blocktrans trimmed %}
-                                JavaScript is required to scan QR codes in your browser.
+                                JavaScript is required for the scanner to work.
                             {% endblocktrans %}
                         </p>
                     </div>
@@ -51,12 +35,49 @@
             </div>
         </noscript>
 
-        <div id="video-container" class="govuk-!-margin-bottom-4">
-            <div id="camera-status" class="govuk-inset-text" style="text-align: center; margin-bottom: 1rem;">
-                <p>📹 Camera is starting...</p>
-                <p><small>Please allow camera permissions when prompted</small></p>
+        <!-- Scanner Section -->
+        <div id="scanner-section">
+            <div id="video-container" class="govuk-!-margin-bottom-4">
+                <div id="camera-status" class="govuk-inset-text" style="text-align: center; margin-bottom: 1rem;">
+                    <p>📹 Camera is starting...</p>
+                    <p><small>Please allow camera permissions when prompted</small></p>
+                </div>
+                <div id="barkoder-container" style="width: 100%; height: 450px; border: 2px dashed #b1b4b6; border-radius: 4px; display: flex; align-items: center; justify-content: center; background-color: #f3f2f1;"></div>
             </div>
-            <div id="barkoder-container" style="width: 100%; height: 450px; border: 2px dashed #b1b4b6; border-radius: 4px; display: flex; align-items: center; justify-content: center; background-color: #f3f2f1;"></div>
+        </div>
+
+        <!-- User Identified Section (hidden initially) -->
+        <div id="user-identified-section" style="display: none;">
+            <div class="govuk-notification-banner govuk-notification-banner--success" role="region" data-module="govuk-notification-banner">
+                <div class="govuk-notification-banner__content">
+                    <h3 class="govuk-notification-banner__heading">✅ User Identified</h3>
+                </div>
+            </div>
+
+            <!-- Products Selection -->
+            <div class="govuk-form-group">
+                <h2 class="govuk-heading-l">Select Products</h2>
+                <div id="products-grid" class="govuk-grid-row">
+                    <!-- Products will be populated here -->
+                </div>
+            </div>
+
+            <!-- Shopping Cart -->
+            <div class="govuk-form-group">
+                <h3 class="govuk-heading-m">Selected Items</h3>
+                <div id="shopping-cart">
+                    <p class="govuk-body">No items selected</p>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="button" class="govuk-button govuk-button--start" onclick="submitOrder()" style="margin-top: 2rem;">
+                Submit Order
+                <svg class="govuk-button__start-icon" xmlns="http://www.w3.org/2000/svg" width="17.5" height="19"
+                     viewBox="0 0 33 40" aria-hidden="true" focusable="false">
+                    <path fill="currentColor" d="M0 0h13l20 20-20 20H0l20-20z"></path>
+                </svg>
+            </button>
         </div>
 
         <form action="" method="post" style="display: none" id="scan-form">
@@ -66,6 +87,166 @@
         </form>
 
         <script>
+            let hexTicket = null;
+            let selectedProducts = {};
+            let longPressTimer = null;
+
+            // Load products from localStorage
+            function loadProducts() {
+                return JSON.parse(localStorage.getItem('ftqoin_products') || '[]');
+            }
+
+            // Display products in the grid
+            function displayProductsGrid() {
+                const products = loadProducts();
+                const productsGrid = document.getElementById('products-grid');
+                
+                if (products.length === 0) {
+                    productsGrid.innerHTML = '<div class="govuk-grid-column-full"><p class="govuk-body">No products available. Please add products in <a href="/settings" class="govuk-link">Settings</a>.</p></div>';
+                    return;
+                }
+
+                let html = '';
+                products.forEach(product => {
+                    const selectedCount = selectedProducts[product.id] || 0;
+                    const badgeHtml = selectedCount > 0 ? `<span class="govuk-tag govuk-tag--blue" style="margin-left: 0.5rem;">${selectedCount}</span>` : '';
+                    
+                    html += `
+                        <div class="govuk-grid-column-one-third govuk-!-margin-bottom-3">
+                            <button 
+                                class="govuk-button govuk-button--secondary" 
+                                style="width: 100%; white-space: normal; height: auto; padding: 1rem;" 
+                                onclick="selectProduct('${product.id}')"
+                                onmousedown="startLongPress('${product.id}')"
+                                onmouseup="cancelLongPress()"
+                                onmouseleave="cancelLongPress()"
+                                ontouchstart="startLongPress('${product.id}')"
+                                ontouchend="cancelLongPress()"
+                            >
+                                <div style="text-align: center;">
+                                    <div style="font-weight: bold;">${product.title}${badgeHtml}</div>
+                                    <div style="font-size: 0.9rem; margin-top: 0.5rem;">${product.price.toFixed(2)} ${product.currency}</div>
+                                </div>
+                            </button>
+                        </div>
+                    `;
+                });
+                
+                productsGrid.innerHTML = html;
+            }
+
+            // Select a product
+            function selectProduct(productId) {
+                if (!selectedProducts[productId]) {
+                    selectedProducts[productId] = 0;
+                }
+                selectedProducts[productId]++;
+                updateDisplays();
+            }
+
+            // Long press handlers
+            function startLongPress(productId) {
+                longPressTimer = setTimeout(() => {
+                    removeProduct(productId);
+                    longPressTimer = null;
+                }, 800); // 800ms long press
+            }
+
+            function cancelLongPress() {
+                if (longPressTimer) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+            }
+
+            // Remove a product
+            function removeProduct(productId) {
+                if (selectedProducts[productId] && selectedProducts[productId] > 0) {
+                    selectedProducts[productId]--;
+                    if (selectedProducts[productId] === 0) {
+                        delete selectedProducts[productId];
+                    }
+                    updateDisplays();
+                }
+            }
+
+            // Update both product grid and shopping cart displays
+            function updateDisplays() {
+                displayProductsGrid();
+                updateShoppingCart();
+            }
+
+            // Update shopping cart display
+            function updateShoppingCart() {
+                const shoppingCart = document.getElementById('shopping-cart');
+                const products = loadProducts();
+                
+                const selectedItems = Object.keys(selectedProducts).filter(id => selectedProducts[id] > 0);
+                
+                if (selectedItems.length === 0) {
+                    shoppingCart.innerHTML = '<p class="govuk-body">No items selected</p>';
+                    return;
+                }
+
+                let html = '<div class="govuk-summary-list">';
+                let totalAmount = 0;
+                
+                selectedItems.forEach(productId => {
+                    const product = products.find(p => p.id === productId);
+                    const quantity = selectedProducts[productId];
+                    const itemTotal = product.price * quantity;
+                    totalAmount += itemTotal;
+                    
+                    html += `
+                        <div class="govuk-summary-list__row">
+                            <dt class="govuk-summary-list__key">${product.title} x${quantity}</dt>
+                            <dd class="govuk-summary-list__value">${itemTotal.toFixed(2)} ${product.currency}</dd>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                    <div class="govuk-summary-list__row" style="border-top: 2px solid #b1b4b6; font-weight: bold;">
+                        <dt class="govuk-summary-list__key">Total</dt>
+                        <dd class="govuk-summary-list__value">${totalAmount.toFixed(2)}</dd>
+                    </div>
+                `;
+                html += '</div>';
+                
+                shoppingCart.innerHTML = html;
+            }
+
+            // Submit order
+            function submitOrder() {
+                if (Object.keys(selectedProducts).length === 0) {
+                    alert('Please select at least one product');
+                    return;
+                }
+
+                const products = loadProducts();
+                const orderData = {
+                    hexTicket: hexTicket,
+                    items: Object.keys(selectedProducts).map(productId => {
+                        const product = products.find(p => p.id === productId);
+                        return {
+                            productId: productId,
+                            title: product.title,
+                            price: product.price,
+                            currency: product.currency,
+                            quantity: selectedProducts[productId]
+                        };
+                    }),
+                    totalAmount: Object.keys(selectedProducts).reduce((total, productId) => {
+                        const product = products.find(p => p.id === productId);
+                        return total + (product.price * selectedProducts[productId]);
+                    }, 0),
+                    timestamp: new Date().toISOString()
+                };
+
+                alert('Order Data Ready to Send:\n\n' + JSON.stringify(orderData, null, 2));
+            }
+
+            // Barkoder initialization
             async function barkoderInit() {
                 const videoContainer = document.getElementById("video-container");
                 const cameraStatus = document.getElementById("camera-status");
@@ -87,62 +268,29 @@
                     Barkoder.setCloseEnabled(false);
                     Barkoder.setContinuous(false);
 
-                    // Update status message
-                    cameraStatus.innerHTML = '<p>🔍 <strong>QR Scanner Ready</strong></p><p><small>Point your camera at a QR code to scan</small></p>';
+                    cameraStatus.innerHTML = '<p>🔍 <strong>Scanner Ready</strong></p><p><small>Point your camera at a QR code</small></p>';
 
-                    // Auto-start the scanner when page loads
                     videoContainer.style.display = "block";
                     Barkoder.startScanner(function (result) {
                         Barkoder.stopScanner();
                         
-                        // Update status on successful scan
-                        cameraStatus.innerHTML = '<p>✅ <strong>QR Code Detected!</strong></p><p><small>Processing...</small></p>';
-                        
-                        if (result.barcodeTypeName === "QR") {
-                            if (result.binaryData.every(function (n) {
-                                return n >= 0x20 && n < 0x7f;
-                            })) {
-                                submitResult(result);
-                            } else {
-                                const canvas = document.createElement("canvas");
-                                canvas.width = result.capturedFrame.width;
-                                canvas.height = result.capturedFrame.height;
-                                const ctx = canvas.getContext("2d");
-                                ctx.putImageData(result.capturedFrame, 0, 0);
-                                const dataURL = canvas.toDataURL("image/png");
-
-                                Barkoder.setEncodingCharacterSet(Barkoder.constants.EncodingCharacterSet.BINARY);
-                                Barkoder.scanImage(dataURL, function (newResult) {
-                                    if (newResult.resultsCount) {
-                                        submitResult(newResult);
-                                    } else {
-                                        submitResult(result);
-                                    }
-                                }, function (err) {
-                                    console.log(err);
-                                    submitResult(result);
-                                });
-                            }
-                        } else {
-                            submitResult(result);
+                        // Store hex ticket and show user identified section
+                        const rawBytes = result.binaryData;
+                        const hexOctets = [];
+                        for (let i = 0; i < rawBytes.length; ++i) {
+                            hexOctets.push(("0" + rawBytes[i].toString(16)).slice(-2));
                         }
+                        hexTicket = hexOctets.join("");
+                        
+                        // Hide scanner, show products
+                        document.getElementById('scanner-section').style.display = 'none';
+                        document.getElementById('user-identified-section').style.display = 'block';
+                        displayProductsGrid();
                     });
                 } catch (error) {
                     console.error('Error initializing camera:', error);
-                    cameraStatus.innerHTML = '<p>❌ <strong>Camera Error</strong></p><p><small>Please check camera permissions and try refreshing the page</small></p>';
+                    cameraStatus.innerHTML = '<p>❌ <strong>Camera Error</strong></p><p><small>Please check permissions and refresh</small></p>';
                 }
-            }
-
-            function submitResult(result) {
-                const scanForm = document.getElementById("scan-form");
-                const dataInput = document.getElementById("data");
-
-                const rawBytes = result.binaryData;
-                const hexOctets = new Array(rawBytes.length * 2);
-                for (let i = 0; i < rawBytes.length; ++i)
-                    hexOctets.push(("0" + rawBytes[i].toString(16)).slice(-2));
-                dataInput.value = hexOctets.join("");
-                scanForm.submit();
             }
 
             window.addEventListener('load', barkoderInit);
