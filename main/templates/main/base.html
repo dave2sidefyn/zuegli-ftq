@@ -81,7 +81,12 @@
                     <ul class="govuk-service-navigation__list" id="navigation">
                         <li class="govuk-service-navigation__item{% if url_name == 'index' %} govuk-service-navigation__item--active{% endif %}">
                             <a class="govuk-service-navigation__link" href="{% url 'index' %}">
-                                {% trans "Home" %}
+                                {% trans "Start" %}
+                            </a>
+                        </li>
+                        <li class="govuk-service-navigation__item{% if url_name == 'settings' %} govuk-service-navigation__item--active{% endif %}">
+                            <a class="govuk-service-navigation__link" href="{% url 'settings' %}">
+                                {% trans "Settings" %}
                             </a>
                         </li>
                         {% if user.is_authenticated %}
