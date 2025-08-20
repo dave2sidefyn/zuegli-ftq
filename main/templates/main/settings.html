@@ -1,0 +1,162 @@
+{% extends "main/base.html" %}
+{% load static crispy_forms_tags i18n %}
+
+{% block title %}{% trans "Settings" %}{% endblock %}
+
+{% block content %}
+    <div class="govuk-width-container">
+        <h1 class="govuk-heading-xl">Settings</h1>
+        
+        <div class="govuk-grid-row">
+            <div class="govuk-grid-column-two-thirds">
+                <h2 class="govuk-heading-l">Product Management</h2>
+                
+                <!-- Add Product Form -->
+                <div class="govuk-form-group">
+                    <fieldset class="govuk-fieldset">
+                        <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
+                            <h3 class="govuk-fieldset__heading">Add New Product</h3>
+                        </legend>
+                        
+                        <div class="govuk-form-group">
+                            <label class="govuk-label" for="productTitle">
+                                Product Title
+                            </label>
+                            <input class="govuk-input" id="productTitle" type="text" required>
+                        </div>
+                        
+                        <div class="govuk-form-group">
+                            <label class="govuk-label" for="price">
+                                Price
+                            </label>
+                            <div class="govuk-input__wrapper">
+                                <input class="govuk-input govuk-input--width-10" id="price" type="number" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                        
+                        <div class="govuk-form-group">
+                            <label class="govuk-label" for="currency">
+                                Currency
+                            </label>
+                            <select class="govuk-select" id="currency" required>
+                                <option value="">Select currency</option>
+                                <option value="EUR">EUR</option>
+                                <option value="CHF">CHF</option>
+                                <option value="DK">DK</option>
+                            </select>
+                        </div>
+                        
+                        <button type="button" class="govuk-button" onclick="addProduct()">
+                            Add Product
+                        </button>
+                    </fieldset>
+                </div>
+                
+                <!-- Products List -->
+                <div class="govuk-form-group">
+                    <h3 class="govuk-heading-m">Existing Products</h3>
+                    <div id="productsList">
+                        <!-- Products will be populated here by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Product management functions
+        let products = JSON.parse(localStorage.getItem('ftqoin_products') || '[]');
+
+        function saveProducts() {
+            localStorage.setItem('ftqoin_products', JSON.stringify(products));
+        }
+
+        function addProduct() {
+            const title = document.getElementById('productTitle').value;
+            const price = parseFloat(document.getElementById('price').value);
+            const currency = document.getElementById('currency').value;
+
+            if (!title || !price || !currency) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            const product = {
+                id: Date.now().toString(),
+                title: title,
+                price: price,
+                currency: currency
+            };
+
+            products.push(product);
+            saveProducts();
+            displayProducts();
+            clearForm();
+        }
+
+        function editProduct(id) {
+            const product = products.find(p => p.id === id);
+            if (product) {
+                document.getElementById('productTitle').value = product.title;
+                document.getElementById('price').value = product.price;
+                document.getElementById('currency').value = product.currency;
+                
+                // Remove the product and add the edited one
+                deleteProduct(id);
+            }
+        }
+
+        function deleteProduct(id) {
+            products = products.filter(p => p.id !== id);
+            saveProducts();
+            displayProducts();
+        }
+
+        function clearForm() {
+            document.getElementById('productTitle').value = '';
+            document.getElementById('price').value = '';
+            document.getElementById('currency').value = '';
+        }
+
+        function displayProducts() {
+            const productsList = document.getElementById('productsList');
+            
+            if (products.length === 0) {
+                productsList.innerHTML = '<p class="govuk-body">No products added yet.</p>';
+                return;
+            }
+
+            let html = '<div class="govuk-grid-row">';
+            products.forEach(product => {
+                html += `
+                    <div class="govuk-grid-column-full govuk-!-margin-bottom-3">
+                        <div class="govuk-summary-card">
+                            <div class="govuk-summary-card__title-wrapper">
+                                <h3 class="govuk-summary-card__title">${product.title}</h3>
+                                <div class="govuk-summary-card__actions">
+                                    <button class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0" onclick="editProduct('${product.id}')">
+                                        Edit
+                                    </button>
+                                    <button class="govuk-button govuk-button--warning govuk-!-margin-bottom-0" onclick="deleteProduct('${product.id}')">
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="govuk-summary-card__content">
+                                <p class="govuk-body">
+                                    <strong>Price:</strong> ${product.price.toFixed(2)} ${product.currency}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            productsList.innerHTML = html;
+        }
+
+        // Initialize products display on page load
+        document.addEventListener('DOMContentLoaded', displayProducts);
+    </script>
+{% endblock content %}
