@@ -89,26 +89,6 @@
                                 {% trans "Settings" %}
                             </a>
                         </li>
-                        {% if user.is_authenticated %}
-                            <li class="govuk-service-navigation__item{% if url_name == 'account' or url_name == 'db_account' or url_name == 'db_abo' or url_name == 'new_db_abo' or url_name == 'saarvv_account' or url_name == 'sbahn_berlin_account' or url_name == 'mvv_account' or url_name == 'db_add_ticket' or url_name == 'sncb_add_ticket' or url_name == 'avv_account' or url_name == 'account_edit' or url_name == 'account_set_password' %} govuk-service-navigation__item--active{% endif %}">
-                                <a class="govuk-service-navigation__link" href="{% url 'account' %}">
-                                    {% trans "Account" %}
-                                </a>
-                            </li>
-                            <li class="govuk-service-navigation__item">
-                                <a class="govuk-service-navigation__link"
-                                   href="{% url 'magiclink:logout' %}?next={{ request.path }}">
-                                    {% trans "Logout" %}
-                                </a>
-                            </li>
-                        {% else %}
-                            <li class="govuk-service-navigation__item{% if url_name == 'login' %} govuk-service-navigation__item--active{% endif %}">
-                                <a class="govuk-service-navigation__link"
-                                   href="{% url 'account_login' %}?next={{ request.path }}">
-                                    {% trans "Login" %}
-                                </a>
-                            </li>
-                        {% endif %}
                     </ul>
                 </nav>
             </div>
