@@ -1,0 +1,289 @@
+/* Mario Kart Style CSS */
+:root {
+    --mario-red: #ff1744;
+    --mario-blue: #2196f3;
+    --mario-yellow: #ffeb3b;
+    --mario-green: #4caf50;
+    --mario-orange: #ff9800;
+    --mario-purple: #9c27b0;
+    --track-gray: #424242;
+    --neon-cyan: #00e5ff;
+    --finish-line: #000;
+}
+
+body {
+    font-family: 'Comic Sans MS', 'Arial Rounded MT Bold', cursive, sans-serif !important;
+    background: linear-gradient(135deg, #87ceeb 0%, #98fb98 50%, #87ceeb 100%);
+    background-attachment: fixed;
+}
+
+/* Racing Track Header */
+.govuk-header {
+    background: linear-gradient(90deg, var(--track-gray) 0%, var(--track-gray) 45%, white 45%, white 50%, var(--track-gray) 50%, var(--track-gray) 55%, white 55%, white 60%, var(--track-gray) 60%);
+    border-bottom: 4px solid var(--mario-red);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.govuk-header__service-name {
+    font-size: 2.5rem !important;
+    font-weight: bold !important;
+    background: linear-gradient(45deg, var(--mario-red), var(--mario-yellow), var(--mario-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    letter-spacing: 2px;
+}
+
+/* Racing Buttons */
+.govuk-button {
+    border-radius: 25px !important;
+    font-weight: bold !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: 3px solid white !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
+    transition: all 0.3s ease !important;
+    font-family: 'Comic Sans MS', cursive !important;
+}
+
+.govuk-button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4) !important;
+}
+
+.govuk-button--start {
+    background: linear-gradient(45deg, var(--mario-red), var(--mario-orange)) !important;
+    color: white !important;
+}
+
+.govuk-button--secondary {
+    background: linear-gradient(45deg, var(--mario-blue), var(--neon-cyan)) !important;
+    color: white !important;
+}
+
+.govuk-button--warning {
+    background: linear-gradient(45deg, var(--mario-yellow), var(--mario-orange)) !important;
+    color: var(--track-gray) !important;
+}
+
+/* Kart Navigation */
+.govuk-service-navigation {
+    background: linear-gradient(45deg, var(--mario-blue), var(--mario-purple));
+    border-bottom: 2px solid var(--mario-yellow);
+}
+
+.govuk-service-navigation__link {
+    color: white !important;
+    font-weight: bold !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    border-radius: 20px;
+    padding: 8px 16px !important;
+    margin: 0 5px;
+}
+
+.govuk-service-navigation__link:hover {
+    background: var(--mario-yellow) !important;
+    color: var(--track-gray) !important;
+    transform: scale(1.05);
+}
+
+.govuk-service-navigation__item--active .govuk-service-navigation__link {
+    background: var(--mario-red) !important;
+    color: white !important;
+    border: 2px solid var(--mario-yellow);
+}
+
+/* Racing Track Container */
+.govuk-width-container {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    padding: 30px;
+    margin: 20px auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    border: 3px solid var(--mario-yellow);
+    backdrop-filter: blur(10px);
+}
+
+/* Mario Kart Headings */
+.govuk-heading-xl {
+    color: var(--mario-red) !important;
+    text-align: center;
+    font-size: 3rem !important;
+    text-shadow: 3px 3px 0px var(--mario-yellow), 6px 6px 10px rgba(0,0,0,0.3);
+    letter-spacing: 2px;
+    margin-bottom: 30px !important;
+}
+
+.govuk-heading-l {
+    color: var(--mario-blue) !important;
+    text-shadow: 2px 2px 0px white, 4px 4px 8px rgba(0,0,0,0.2);
+    border-bottom: 3px solid var(--mario-yellow);
+    padding-bottom: 10px;
+}
+
+.govuk-heading-m {
+    color: var(--mario-green) !important;
+    text-shadow: 1px 1px 0px white;
+}
+
+/* Race Track Scanner Area */
+#barkoder-container {
+    border: 4px solid var(--mario-red) !important;
+    border-radius: 15px !important;
+    background: linear-gradient(45deg, #f0f0f0, #e0e0e0) !important;
+    background-image: 
+        repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 20px,
+            rgba(255, 23, 68, 0.1) 20px,
+            rgba(255, 23, 68, 0.1) 40px
+        );
+    position: relative;
+    overflow: hidden;
+}
+
+#barkoder-container::before {
+    content: "🏁";
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 2rem;
+    z-index: 10;
+}
+
+/* Camera Status */
+#camera-status {
+    background: linear-gradient(45deg, var(--mario-green), #81c784) !important;
+    color: white !important;
+    border: 3px solid var(--mario-yellow) !important;
+    border-radius: 15px !important;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3) !important;
+}
+
+/* Product Cards - Kart Style */
+.govuk-summary-card {
+    border: 3px solid var(--mario-blue) !important;
+    border-radius: 15px !important;
+    background: linear-gradient(135deg, #ffffff, #f5f5f5) !important;
+    box-shadow: 0 6px 20px rgba(33, 150, 243, 0.3) !important;
+    transition: all 0.3s ease;
+}
+
+.govuk-summary-card:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(33, 150, 243, 0.4) !important;
+}
+
+.govuk-summary-card__title {
+    color: var(--mario-red) !important;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Power-up Badges */
+.govuk-tag {
+    border-radius: 20px !important;
+    font-weight: bold !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+}
+
+.govuk-tag--blue {
+    background: linear-gradient(45deg, var(--mario-blue), var(--neon-cyan)) !important;
+    border: 2px solid white !important;
+}
+
+/* Success Banner - Victory Style */
+.govuk-notification-banner--success {
+    background: linear-gradient(45deg, var(--mario-green), var(--mario-yellow)) !important;
+    border: 3px solid var(--mario-red) !important;
+    border-radius: 15px !important;
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4) !important;
+}
+
+.govuk-notification-banner__heading {
+    color: white !important;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3) !important;
+    font-size: 1.5rem !important;
+}
+
+/* Input Fields - Racing Style */
+.govuk-input, .govuk-select {
+    border: 3px solid var(--mario-blue) !important;
+    border-radius: 10px !important;
+    padding: 12px !important;
+    font-weight: bold !important;
+    transition: all 0.3s ease;
+}
+
+.govuk-input:focus, .govuk-select:focus {
+    border-color: var(--mario-red) !important;
+    box-shadow: 0 0 10px rgba(255, 23, 68, 0.3) !important;
+    transform: scale(1.02);
+}
+
+/* Footer */
+.govuk-footer {
+    background: linear-gradient(135deg, var(--track-gray), #666) !important;
+    border-top: 4px solid var(--mario-yellow);
+}
+
+.govuk-footer__link {
+    color: var(--mario-yellow) !important;
+}
+
+/* Racing Animations */
+@keyframes race-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.racing-pulse {
+    animation: race-pulse 2s infinite;
+}
+
+/* Mobile Responsive Racing */
+@media (max-width: 768px) {
+    .govuk-header__service-name {
+        font-size: 2rem !important;
+    }
+    
+    .govuk-heading-xl {
+        font-size: 2.5rem !important;
+    }
+    
+    .govuk-width-container {
+        margin: 10px;
+        padding: 20px;
+    }
+}
+
+/* Special Racing Effects */
+.finish-line {
+    background: repeating-linear-gradient(
+        90deg,
+        white 0px,
+        white 10px,
+        black 10px,
+        black 20px
+    );
+    height: 5px;
+    margin: 20px 0;
+    border-radius: 3px;
+}
+
+/* Power-up glow effect */
+.power-up-glow {
+    box-shadow: 0 0 20px var(--neon-cyan), 0 0 40px var(--neon-cyan), 0 0 60px var(--neon-cyan) !important;
+    animation: glow-pulse 1.5s infinite alternate;
+}
+
+@keyframes glow-pulse {
+    from { box-shadow: 0 0 20px var(--neon-cyan), 0 0 40px var(--neon-cyan), 0 0 60px var(--neon-cyan); }
+    to { box-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan), 0 0 30px var(--neon-cyan); }
+}
