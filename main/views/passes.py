@@ -143,8 +143,12 @@ def index(request):
         tickets = [ticket_bytes]
 
     ticket_id, error = process_tickets(request, tickets)
+    print(f"DEBUG: After process_tickets - ticket_id: {ticket_id}, error: {error}")
+    print(f"DEBUG: Tickets list length: {len(tickets)}")
+    
     passenger_name = None
     if ticket_id:
+        print(f"DEBUG: Starting zuegli.app API call for ticket_id: {ticket_id}")
         # Instead of parsing locally, call zuegli.app API for ticket processing
         try:
             import requests
@@ -221,6 +225,8 @@ def index(request):
                     print(f"DEBUG: zuegli.app API error: {error_data}")
                 else:
                     print(f"DEBUG: Unexpected API response: {response.status_code} - {response.text}")
+            else:
+                print(f"DEBUG: No tickets in list to process with zuegli.app API")
                     
         except Exception as api_error:
             print(f"DEBUG: Error calling zuegli.app API: {api_error}")
@@ -229,6 +235,8 @@ def index(request):
         
         # For FTQoin, don't redirect to ticket view, stay on scanner page
         # return redirect('ticket', pk=ticket_id)
+    else:
+        print(f"DEBUG: No ticket_id, skipping zuegli.app API call")
 
     return render(request, "main/index.html", {
         "image_form": image_form,
