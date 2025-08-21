@@ -200,7 +200,8 @@ def index(request):
                     if ticket_response.status_code == 200:
                         ticket_html = ticket_response.text
                         
-                        # Parse HTML to extract passenger information
+                        # Parse HTML to extract passenger information using BeautifulSoup
+                        from bs4 import BeautifulSoup
                         import re
                         
                         # Always debug print HTML snippet to see available data  
@@ -208,44 +209,77 @@ def index(request):
                         print(f"DEBUG: Searching for 'david' in HTML: {'david' in ticket_html.lower()}")
                         print(f"DEBUG: Searching for 'wiedmer' in HTML: {'wiedmer' in ticket_html.lower()}")
                         
-                        # Search for any passenger-related data in the HTML
-                        passenger_section = re.search(r'<h2[^>]*>.*?passenger.*?</h2>(.*?)<h2', ticket_html, re.IGNORECASE | re.DOTALL)
-                        if passenger_section:
-                            print(f"DEBUG: Found passenger section: {passenger_section.group(1)[:200]}...")
+                        # Parse HTML with BeautifulSoup for more reliable extraction
+                        soup = BeautifulSoup(ticket_html, 'html.parser')
                         
-                        traveler_section = re.search(r'<h2[^>]*>.*?traveler.*?</h2>(.*?)<h2', ticket_html, re.IGNORECASE | re.DOTALL)
-                        if traveler_section:
-                            print(f"DEBUG: Found traveler section: {traveler_section.group(1)[:200]}...")
+                        # Strategy 1: Look for table rows with passenger information
+                        passenger_name = None
                         
-                        # Look for passenger name patterns in the HTML
-                        name_patterns = [
-                            r'<strong>Passenger[^<]*</strong>[^<]*<[^>]*>([^<]+)',
-                            r'Passenger[^:]*:\s*([A-Z][a-z]+\s+[A-Z][a-z]+)',  # First Last name pattern
-                            r'Name[^:]*:\s*([A-Z][a-z]+\s+[A-Z][a-z]+)',
-                            r'Forename[^:]*:\s*([A-Z][a-z]+)',
-                            r'<td[^>]*>Name</td>\s*<td[^>]*>([^<]+)',
-                            r'<td[^>]*>Passenger</td>\s*<td[^>]*>([^<]+)',
-                            r'>([A-Z][A-Z\s]+[A-Z])<',  # All caps names like "DAVID WIEDMER"
-                            r'David\s+Wiedmer',  # Specific name search
-                            r'WIEDMER[^<]*DAVID',  # Last name first pattern
-                            r'DAVID[^<]*WIEDMER',  # First name first pattern
-                        ]
+                        # Check for table cells containing passenger information
+                        tables = soup.find_all('table')
+                        for table in tables:
+                            rows = table.find_all('tr')
+                            for row in rows:
+                                cells = row.find_all(['td', 'th'])
+                                if len(cells) >= 2:
+                                    # Check if first cell contains passenger-related text
+                                    first_cell_text = cells[0].get_text().strip().lower()
+                                    if any(keyword in first_cell_text for keyword in ['passenger', 'name', 'forename', 'first name', 'traveler', 'traveller']):
+                                        name_text = cells[1].get_text().strip()
+                                        print(f"DEBUG: Found table cell - Label: '{first_cell_text}' Value: '{name_text}'")
+                                        
+                                        # Extract first name from the value
+                                        if name_text and not any(skip in name_text.lower() for skip in ['title', 'english', 'german', 'partially redacted']):
+                                            # Handle different name formats
+                                            name_parts = name_text.split()
+                                            if len(name_parts) >= 1:
+                                                # Check if it looks like a real name (contains letters)
+                                                first_part = name_parts[0].strip()
+                                                if re.match(r'^[A-Za-z]+$', first_part) and len(first_part) > 1:
+                                                    passenger_name = first_part.title()
+                                                    print(f"DEBUG: Extracted passenger name from table: {passenger_name}")
+                                                    break
+                                if passenger_name:
+                                    break
+                            if passenger_name:
+                                break
                         
-                        for i, pattern in enumerate(name_patterns):
-                            match = re.search(pattern, ticket_html, re.IGNORECASE)
-                            if match:
-                                potential_name = match.group(1).strip() if match.groups() else match.group(0).strip()
-                                print(f"DEBUG: Pattern {i} matched: '{potential_name}'")
-                                if potential_name and len(potential_name.split()) >= 1:
-                                    # Extract first name (first word)
-                                    if potential_name.lower() not in ['title', 'name', 'passenger']:
-                                        passenger_name = potential_name.split()[0]
-                                        print(f"DEBUG: Final extracted passenger name: {passenger_name}")
-                                        break
-                        
+                        # Strategy 2: Look for headers with passenger sections
                         if not passenger_name:
-                            print("DEBUG: No passenger name found with any pattern")
-                            # Additional search for any occurrence of david or wiedmer
+                            headers = soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
+                            for header in headers:
+                                header_text = header.get_text().strip().lower()
+                                if any(keyword in header_text for keyword in ['passenger', 'traveler', 'traveller']):
+                                    print(f"DEBUG: Found passenger header: {header_text}")
+                                    # Look for content after this header
+                                    next_sibling = header.find_next_sibling()
+                                    if next_sibling:
+                                        sibling_text = next_sibling.get_text().strip()
+                                        print(f"DEBUG: Content after passenger header: {sibling_text[:100]}...")
+                                        
+                                        # Try to extract name from the sibling content
+                                        name_match = re.search(r'\b([A-Z][a-z]{2,})\s+([A-Z][a-z]{2,})\b', sibling_text)
+                                        if name_match:
+                                            passenger_name = name_match.group(1)
+                                            print(f"DEBUG: Extracted name from header section: {passenger_name}")
+                                            break
+                        
+                        # Strategy 3: Look for strong/bold tags containing names
+                        if not passenger_name:
+                            strong_tags = soup.find_all(['strong', 'b'])
+                            for strong in strong_tags:
+                                strong_text = strong.get_text().strip()
+                                # Look for name patterns in bold text
+                                name_match = re.search(r'\b([A-Z][a-z]{2,})\s+([A-Z][a-z]{2,})\b', strong_text)
+                                if name_match and not any(skip in strong_text.lower() for skip in ['title', 'english', 'german']):
+                                    passenger_name = name_match.group(1)
+                                    print(f"DEBUG: Extracted name from bold text: {passenger_name}")
+                                    break
+                        
+                        # Strategy 4: Fallback to text search for known names (like David Wiedmer)
+                        if not passenger_name:
+                            print("DEBUG: No passenger name found with structured parsing")
+                            # Additional search for any occurrence of specific names
                             if 'david' in ticket_html.lower() or 'wiedmer' in ticket_html.lower():
                                 print("DEBUG: Found 'david' or 'wiedmer' in HTML!")
                                 david_match = re.search(r'\b(david)\b', ticket_html, re.IGNORECASE)
