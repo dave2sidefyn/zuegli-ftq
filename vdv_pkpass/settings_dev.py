@@ -35,7 +35,7 @@ DEBUG = True
 ALLOWED_HOSTS = ["localhost", "vdv-pkpass.eu.ngrok.io", "127.0.0.1", "direct-qrcamera.preview.emergentagent.com", "*.preview.emergentagent.com", "42e4a65b-cb35-4fec-aadc-3df0e0a9c12c.preview.emergentagent.com"]
 
 # SECURITY WARNING: We know. They have lawyers.
-BARKODER_LICENSE = "PEmBIohr9EZXgCkySoetbwP4gvOfMcGzgxKPL2X6uqMvOKeLOYaX2Oi3aDLNeJlMLNYjG0MsWyjNTP1Esd2pCFYaSn9x2ZUs-uJI-3V4ZOMD4-e3w5iY5VDJqIlpyNVoGTPmrZY_sJrTh_LLPxrpVlQg4kk0hWMGMH16eMyOMvSBjRleO9Nb_IFF6Szgis334NKH5IbAKQZ4Lu9RY3Eo3g.."
+BARKODER_LICENSE = os.getenv('BARKODER_LICENSE', 'PEmBIohr9EZXgCkySoetbwP4gvOfMcGzgxKPL2X6uqMvOKeLOYaX2Oi3aDLNeJlMLNYjG0MsWyjNTP1Esd2pCFYaSn9x2ZUs-uJI-3V4ZOMD4-e3w5iY5VDJqIlpyNVoGTPmrZY_sJrTh_LLPxrpVlQg4kk0hWMGMH16eMyOMvSBjRleO9Nb_IFF6Szgis334NKH5IbAKQZ4Lu9RY3Eo3g..')
 
 # Application definition
 
