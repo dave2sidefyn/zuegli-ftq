@@ -154,6 +154,8 @@ def index(request):
     return render(request, "main/index.html", {
         "image_form": image_form,
         "error": error,
+        "passenger_name": passenger_name,
+        "ticket_identified": ticket_id is not None,
     })
 
 
