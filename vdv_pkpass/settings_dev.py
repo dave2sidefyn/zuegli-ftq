@@ -340,7 +340,7 @@ MAGICLINK_AUTH_TIMEOUT = 900
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = "Zügli <noreply@magicalcodewit.ch>"
 
-CSRF_TRUSTED_ORIGINS = ["http://localhost", "https://vdv-pkpass.eu.ngrok.io", "https://direct-qrcamera.preview.emergentagent.com", "https://*.preview.emergentagent.com"]
+CSRF_TRUSTED_ORIGINS = ["http://localhost", "https://vdv-pkpass.eu.ngrok.io", "https://direct-qrcamera.preview.emergentagent.com", "https://*.preview.emergentagent.com", "https://42e4a65b-cb35-4fec-aadc-3df0e0a9c12c.preview.emergentagent.com"]
 
 LOGGING = {
     'version': 1,
