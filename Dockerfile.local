@@ -1,0 +1,94 @@
+# FTQoin Racing Scanner - Local Development Docker Configuration
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV DJANGO_SETTINGS_MODULE=vdv_pkpass.settings_dev
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    libldap2-dev \
+    libsasl2-dev \
+    libssl-dev \
+    libffi-dev \
+    libxml2-dev \
+    libxslt1-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    zlib1g-dev \
+    libopencv-dev \
+    python3-opencv \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set work directory
+WORKDIR /app
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy project files
+COPY . .
+
+# Create directories for static and media files
+RUN mkdir -p /app/static /app/media
+
+# Create SQLite database directory with proper permissions
+RUN mkdir -p /app/data && chmod 755 /app/data
+
+# Collect static files
+RUN python manage.py collectstatic --noinput --settings=vdv_pkpass.settings_dev || echo "Static collection failed, will retry at startup"
+
+# Create database migrations (if needed)
+RUN python manage.py makemigrations --settings=vdv_pkpass.settings_dev || echo "No migrations needed"
+RUN python manage.py migrate --settings=vdv_pkpass.settings_dev || echo "Migration will be done at startup"
+
+# Create a comprehensive startup script
+RUN echo '#!/bin/bash\n\
+echo "🏁 FTQoin Racing Scanner - Starting Up..."\n\
+echo "==========================================="\n\
+echo "🏎️ Django FTQoin Racing Scanner"\n\
+echo "🎯 Improved passenger name extraction with BeautifulSoup"\n\
+echo "🌟 Mario Kart themed QR scanner for VDV tickets"\n\
+echo "==========================================="\n\
+echo ""\n\
+echo "🔧 Running database migrations..."\n\
+python manage.py migrate --settings=vdv_pkpass.settings_dev\n\
+echo ""\n\
+echo "🎨 Collecting static files..."\n\
+python manage.py collectstatic --noinput --settings=vdv_pkpass.settings_dev\n\
+echo ""\n\
+echo "🚀 Starting Django development server..."\n\
+echo ""\n\
+echo "🌐 Application URLs:"\n\
+echo "   Main Scanner: http://localhost:8000/"\n\
+echo "   Settings:     http://localhost:8000/settings/"\n\
+echo "   Admin:        http://localhost:8000/admin/"\n\
+echo ""\n\
+echo "📱 Features:"\n\
+echo "   ✅ QR Code scanning with camera access"\n\
+echo "   ✅ VDV ticket processing via zuegli.app API"\n\
+echo "   ✅ Improved passenger name extraction"\n\
+echo "   ✅ Mario Kart themed UI"\n\
+echo "   ✅ Product management system"\n\
+echo ""\n\
+echo "🎮 Ready to race! Starting server..."\n\
+echo "==========================================="\n\
+echo ""\n\
+python manage.py runserver 0.0.0.0:8000 --settings=vdv_pkpass.settings_dev\n\
+' > /app/start.sh && chmod +x /app/start.sh
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8000/ || exit 1
+
+# Start the application
+CMD ["/app/start.sh"]
