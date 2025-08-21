@@ -879,48 +879,42 @@ def parse_ticket_vdv(ticket_bytes: bytes, context: "vdv.ticket.Context") -> VDVT
         root_ca_ref = vdv.CAReference.level_1_root()
     else:
         raise NotImplementedError()
-        
     raw_root_ca = pki_store.find_certificate(root_ca_ref)
     if not raw_root_ca:
-        # Create mock root CA for development
-        print("DEBUG: Root CA not found, creating mock root CA for development")
-        raw_root_ca = type('MockRootCA', (), {
-            'data': b'mock_root_ca_data',
-            'ca_reference': root_ca_ref
-        })()
+        raise TicketError(
+            title="Internal error",
+            message="The root CA couldn't be found. This is almost certainly a bug.",
+        )
 
     try:
-        if hasattr(raw_root_ca, 'data') and raw_root_ca.data == b'mock_root_ca_data':
-            # Create mock certificate data for development
-            print("DEBUG: Using mock root CA data")
-            root_ca_data = type('MockRootCAData', (), {
-                'ca_reference': root_ca_ref,
-                'certificate_holder_reference': root_ca_ref,
-                'public_key': None
-            })()
-        else:
-            root_ca = vdv.Certificate.parse(raw_root_ca.data)
-            if root_ca.needs_ca_key():
-                raise TicketError(
-                    title="Internal error",
-                    message="The root CA certificate is encrypted and requires a CA key. This is almost certainly a bug."
-                )
-            root_ca_data = vdv.CertificateData.parse(root_ca)
+        root_ca = vdv.Certificate.parse(raw_root_ca.data)
     except vdv.util.VDVException:
-        # Fallback to mock for development
-        print("DEBUG: Root CA parsing failed, using mock data")
-        root_ca_data = type('MockRootCAData', (), {
-            'ca_reference': root_ca_ref,
-            'certificate_holder_reference': root_ca_ref,
-            'public_key': None
-        })()
+        raise TicketError(
+            title="Internal error",
+            message="The root CA certificate is invalid. This is almost certainly a bug.",
+            exception=traceback.format_exc()
+        )
 
-    if hasattr(root_ca_data, 'ca_reference') and root_ca_data.ca_reference != root_ca_ref:
-        if raw_root_ca.data != b'mock_root_ca_data':  # Only check for non-mock certificates
-            raise TicketError(
-                title="Internal error",
-                message="The root CA appears to not be a root. This is almost certainly a bug."
-            )
+    if root_ca.needs_ca_key():
+        raise TicketError(
+            title="Internal error",
+            message="The root CA certificate is encrypted and requires a CA key. This is almost certainly a bug."
+        )
+
+    try:
+        root_ca_data = vdv.CertificateData.parse(root_ca)
+    except vdv.util.VDVException:
+        raise TicketError(
+            title="Internal error",
+            message="The root CA certificate data is invalid. This is almost certainly a bug.",
+            exception=traceback.format_exc()
+        )
+
+    if root_ca_data.ca_reference != root_ca_ref or root_ca_data.certificate_holder_reference != root_ca_ref:
+        raise TicketError(
+            title="Internal error",
+            message="The root CA appears to not be a root. This is almost certainly a bug."
+        )
 
     try:
         root_ca.verify_signature(root_ca_data)
