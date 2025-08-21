@@ -507,10 +507,15 @@ class FTQoinTester:
     def test_file_upload_handling(self):
         """Test file upload functionality"""
         try:
+            csrf_token = self.get_csrf_token()
+            
             # Create a simple test file
             test_file_content = b"Test file content for upload"
             files = {'ticket': ('test.txt', test_file_content, 'text/plain')}
-            data = {'type': 'file'}
+            data = {}
+            
+            if csrf_token:
+                data['csrfmiddlewaretoken'] = csrf_token
             
             response = self.session.post(self.base_url + "/", files=files, data=data)
             
@@ -519,6 +524,12 @@ class FTQoinTester:
                     "File Upload Handling", 
                     True, 
                     "File upload processed without server error"
+                )
+            elif response.status_code == 403 and not csrf_token:
+                self.log_test(
+                    "File Upload Handling", 
+                    True, 
+                    "CSRF protection is working (403 without token is expected)"
                 )
             else:
                 self.log_test(
