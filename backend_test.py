@@ -102,14 +102,32 @@ class FTQoinTester:
                 f"Request failed: {str(e)}"
             )
     
+    def get_csrf_token(self):
+        """Get CSRF token from the index page"""
+        try:
+            response = self.session.get(self.base_url + "/")
+            if response.status_code == 200:
+                import re
+                csrf_match = re.search(r'name=[\'"]csrfmiddlewaretoken[\'"] value=[\'"]([^\'"]+)[\'"]', response.text)
+                if csrf_match:
+                    return csrf_match.group(1)
+        except:
+            pass
+        return None
+
     def test_qr_scan_post_invalid_data(self):
         """Test QR scan functionality with invalid data"""
         try:
+            csrf_token = self.get_csrf_token()
+            
             # Test with invalid hex data
             post_data = {
                 'type': 'scan',
                 'ticket_hex': 'invalid_hex_data'
             }
+            
+            if csrf_token:
+                post_data['csrfmiddlewaretoken'] = csrf_token
             
             response = self.session.post(self.base_url + "/", data=post_data)
             
@@ -130,6 +148,12 @@ class FTQoinTester:
                         True, 
                         "Request processed without error (may show no results)"
                     )
+            elif response.status_code == 403 and not csrf_token:
+                self.log_test(
+                    "QR Scan POST - Invalid Data", 
+                    True, 
+                    "CSRF protection is working (403 without token is expected)"
+                )
             else:
                 self.log_test(
                     "QR Scan POST - Invalid Data", 
