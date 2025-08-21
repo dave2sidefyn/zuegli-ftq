@@ -203,8 +203,8 @@ def index(request):
                         # Parse HTML to extract passenger information
                         import re
                         
-                        # Always debug print HTML snippet to see available data
-                        print(f"DEBUG: HTML snippet (first 2000 chars): {ticket_html[:2000]}")
+                        # Always debug print HTML snippet to see available data  
+                        print(f"DEBUG: HTML snippet (first 5000 chars): {ticket_html[:5000]}")
                         print(f"DEBUG: Searching for 'david' in HTML: {'david' in ticket_html.lower()}")
                         print(f"DEBUG: Searching for 'wiedmer' in HTML: {'wiedmer' in ticket_html.lower()}")
                         
