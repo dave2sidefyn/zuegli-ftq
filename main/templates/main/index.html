@@ -36,7 +36,7 @@
         </noscript>
 
         <!-- Scanner Section -->
-        <div id="scanner-section">
+        <div id="scanner-section" style="{% if ticket_identified %}display: none;{% endif %}">
             <div id="video-container" class="govuk-!-margin-bottom-4">
                 <div id="camera-status" class="govuk-inset-text" style="text-align: center; margin-bottom: 1rem;">
                     <p>🏁 Race Scanner Starting...</p>
