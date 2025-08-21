@@ -200,11 +200,22 @@ def index(request):
                     if ticket_response.status_code == 200:
                         ticket_html = ticket_response.text
                         
-                        # Always debug print HTML snippet to see available data
-                        print(f"DEBUG: HTML snippet (first 1000 chars): {ticket_html[:1000]}")
-                        
                         # Parse HTML to extract passenger information
                         import re
+                        
+                        # Always debug print HTML snippet to see available data
+                        print(f"DEBUG: HTML snippet (first 2000 chars): {ticket_html[:2000]}")
+                        print(f"DEBUG: Searching for 'david' in HTML: {'david' in ticket_html.lower()}")
+                        print(f"DEBUG: Searching for 'wiedmer' in HTML: {'wiedmer' in ticket_html.lower()}")
+                        
+                        # Search for any passenger-related data in the HTML
+                        passenger_section = re.search(r'<h2[^>]*>.*?passenger.*?</h2>(.*?)<h2', ticket_html, re.IGNORECASE | re.DOTALL)
+                        if passenger_section:
+                            print(f"DEBUG: Found passenger section: {passenger_section.group(1)[:200]}...")
+                        
+                        traveler_section = re.search(r'<h2[^>]*>.*?traveler.*?</h2>(.*?)<h2', ticket_html, re.IGNORECASE | re.DOTALL)
+                        if traveler_section:
+                            print(f"DEBUG: Found traveler section: {traveler_section.group(1)[:200]}...")
                         
                         # Look for passenger name patterns in the HTML
                         name_patterns = [
