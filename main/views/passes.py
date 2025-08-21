@@ -373,33 +373,58 @@ def index(request):
                             if ticket_response.status_code == 200:
                                 ticket_html = ticket_response.text
                                 
-                                # Parse HTML to extract passenger information
+                                # Parse HTML to extract passenger information using BeautifulSoup
+                                from bs4 import BeautifulSoup
                                 import re
                                 
-                                # Look for passenger name patterns in the HTML
-                                name_patterns = [
-                                    r'<strong>Passenger[^<]*</strong>[^<]*<[^>]*>([^<]+)',
-                                    r'Passenger[^:]*:\s*([A-Z][a-z]+)',
-                                    r'Name[^:]*:\s*([A-Z][a-z]+)',
-                                    r'Forename[^:]*:\s*([A-Z][a-z]+)',
-                                    r'<td[^>]*>Name</td>\s*<td[^>]*>([^<]+)',
-                                    r'<td[^>]*>Passenger</td>\s*<td[^>]*>([^<]+)',
-                                ]
+                                print(f"DEBUG: HTML snippet (500 chars): {ticket_html[:500]}...")
                                 
-                                for pattern in name_patterns:
-                                    match = re.search(pattern, ticket_html, re.IGNORECASE)
-                                    if match:
-                                        potential_name = match.group(1).strip()
-                                        if potential_name and len(potential_name.split()) >= 1:
-                                            # Extract first name (first word)
-                                            passenger_name = potential_name.split()[0]
-                                            print(f"DEBUG: Extracted passenger name: {passenger_name}")
+                                # Parse HTML with BeautifulSoup for more reliable extraction
+                                soup = BeautifulSoup(ticket_html, 'html.parser')
+                                
+                                # Strategy 1: Look for table rows with passenger information
+                                tables = soup.find_all('table')
+                                for table in tables:
+                                    rows = table.find_all('tr')
+                                    for row in rows:
+                                        cells = row.find_all(['td', 'th'])
+                                        if len(cells) >= 2:
+                                            # Check if first cell contains passenger-related text
+                                            first_cell_text = cells[0].get_text().strip().lower()
+                                            if any(keyword in first_cell_text for keyword in ['passenger', 'name', 'forename', 'first name', 'traveler', 'traveller']):
+                                                name_text = cells[1].get_text().strip()
+                                                print(f"DEBUG: Found table cell - Label: '{first_cell_text}' Value: '{name_text}'")
+                                                
+                                                # Extract first name from the value
+                                                if name_text and not any(skip in name_text.lower() for skip in ['title', 'english', 'german', 'partially redacted']):
+                                                    # Handle different name formats
+                                                    name_parts = name_text.split()
+                                                    if len(name_parts) >= 1:
+                                                        # Check if it looks like a real name (contains letters)
+                                                        first_part = name_parts[0].strip()
+                                                        if re.match(r'^[A-Za-z]+$', first_part) and len(first_part) > 1:
+                                                            passenger_name = first_part.title()
+                                                            print(f"DEBUG: Extracted passenger name from table: {passenger_name}")
+                                                            break
+                                        if passenger_name:
+                                            break
+                                    if passenger_name:
+                                        break
+                                
+                                # Strategy 2: Look for strong/bold tags containing names
+                                if not passenger_name:
+                                    strong_tags = soup.find_all(['strong', 'b'])
+                                    for strong in strong_tags:
+                                        strong_text = strong.get_text().strip()
+                                        # Look for name patterns in bold text
+                                        name_match = re.search(r'\b([A-Z][a-z]{2,})\s+([A-Z][a-z]{2,})\b', strong_text)
+                                        if name_match and not any(skip in strong_text.lower() for skip in ['title', 'english', 'german']):
+                                            passenger_name = name_match.group(1)
+                                            print(f"DEBUG: Extracted name from bold text: {passenger_name}")
                                             break
                                 
                                 if not passenger_name:
-                                    print("DEBUG: No passenger name found in ticket HTML")
-                                    # Debug: save a snippet of the HTML
-                                    print(f"DEBUG: HTML snippet: {ticket_html[:500]}...")
+                                    print("DEBUG: No passenger name found in ticket HTML with BeautifulSoup parsing")
                             else:
                                 print(f"DEBUG: Failed to fetch ticket details: {ticket_response.status_code}")
                         
