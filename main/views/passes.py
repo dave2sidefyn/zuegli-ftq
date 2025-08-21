@@ -156,7 +156,12 @@ def index(request):
             
             # Get the hex ticket data that was just processed
             if tickets and len(tickets) > 0:
-                ticket_hex = tickets[0].hex()
+                # tickets[0] might be raw bytes, so convert to hex properly
+                if hasattr(tickets[0], 'hex'):
+                    ticket_hex = tickets[0].hex()
+                else:
+                    # tickets[0] is raw bytes, convert to hex string
+                    ticket_hex = tickets[0].hex()
                 print(f"DEBUG: Using zuegli.app API for ticket processing")
                 print(f"DEBUG: Ticket hex length: {len(ticket_hex)}")
                 
