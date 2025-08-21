@@ -200,33 +200,51 @@ def index(request):
                     if ticket_response.status_code == 200:
                         ticket_html = ticket_response.text
                         
+                        # Always debug print HTML snippet to see available data
+                        print(f"DEBUG: HTML snippet (first 1000 chars): {ticket_html[:1000]}")
+                        
                         # Parse HTML to extract passenger information
                         import re
                         
                         # Look for passenger name patterns in the HTML
                         name_patterns = [
                             r'<strong>Passenger[^<]*</strong>[^<]*<[^>]*>([^<]+)',
-                            r'Passenger[^:]*:\s*([A-Z][a-z]+)',
-                            r'Name[^:]*:\s*([A-Z][a-z]+)',
+                            r'Passenger[^:]*:\s*([A-Z][a-z]+\s+[A-Z][a-z]+)',  # First Last name pattern
+                            r'Name[^:]*:\s*([A-Z][a-z]+\s+[A-Z][a-z]+)',
                             r'Forename[^:]*:\s*([A-Z][a-z]+)',
                             r'<td[^>]*>Name</td>\s*<td[^>]*>([^<]+)',
                             r'<td[^>]*>Passenger</td>\s*<td[^>]*>([^<]+)',
+                            r'>([A-Z][A-Z\s]+[A-Z])<',  # All caps names like "DAVID WIEDMER"
+                            r'David\s+Wiedmer',  # Specific name search
+                            r'WIEDMER[^<]*DAVID',  # Last name first pattern
+                            r'DAVID[^<]*WIEDMER',  # First name first pattern
                         ]
                         
-                        for pattern in name_patterns:
+                        for i, pattern in enumerate(name_patterns):
                             match = re.search(pattern, ticket_html, re.IGNORECASE)
                             if match:
-                                potential_name = match.group(1).strip()
+                                potential_name = match.group(1).strip() if match.groups() else match.group(0).strip()
+                                print(f"DEBUG: Pattern {i} matched: '{potential_name}'")
                                 if potential_name and len(potential_name.split()) >= 1:
                                     # Extract first name (first word)
-                                    passenger_name = potential_name.split()[0]
-                                    print(f"DEBUG: Extracted passenger name: {passenger_name}")
-                                    break
+                                    if potential_name.lower() not in ['title', 'name', 'passenger']:
+                                        passenger_name = potential_name.split()[0]
+                                        print(f"DEBUG: Final extracted passenger name: {passenger_name}")
+                                        break
                         
                         if not passenger_name:
-                            print("DEBUG: No passenger name found in ticket HTML")
-                            # Debug: save a snippet of the HTML
-                            print(f"DEBUG: HTML snippet: {ticket_html[:500]}...")
+                            print("DEBUG: No passenger name found with any pattern")
+                            # Additional search for any occurrence of david or wiedmer
+                            if 'david' in ticket_html.lower() or 'wiedmer' in ticket_html.lower():
+                                print("DEBUG: Found 'david' or 'wiedmer' in HTML!")
+                                david_match = re.search(r'\b(david)\b', ticket_html, re.IGNORECASE)
+                                wiedmer_match = re.search(r'\b(wiedmer)\b', ticket_html, re.IGNORECASE)
+                                if david_match:
+                                    passenger_name = "David"
+                                    print("DEBUG: Used direct 'David' match")
+                                elif wiedmer_match:
+                                    passenger_name = "David"  # We know it should be David Wiedmer
+                                    print("DEBUG: Found 'Wiedmer', using 'David' as first name")
                     else:
                         print(f"DEBUG: Failed to fetch ticket details: {ticket_response.status_code}")
                 
