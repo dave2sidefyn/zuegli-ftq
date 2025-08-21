@@ -281,7 +281,7 @@
                     Barkoder.startScanner(function (result) {
                         Barkoder.stopScanner();
                         
-                        // Store hex ticket and show user identified section
+                        // Store hex ticket and submit to backend for processing
                         const rawBytes = result.binaryData;
                         const hexOctets = [];
                         for (let i = 0; i < rawBytes.length; ++i) {
@@ -289,10 +289,17 @@
                         }
                         hexTicket = hexOctets.join("");
                         
-                        // Hide scanner, show products
-                        document.getElementById('scanner-section').style.display = 'none';
-                        document.getElementById('user-identified-section').style.display = 'block';
-                        displayProductsGrid();
+                        // Submit the form to backend for processing
+                        const scanForm = document.getElementById("scan-form");
+                        const dataInput = document.getElementById("data");
+                        dataInput.value = hexTicket;
+                        
+                        // Show processing message
+                        const cameraStatus = document.getElementById("camera-status");
+                        cameraStatus.innerHTML = '<p>🏁 <strong>Processing Ticket...</strong></p><p><small>Extracting racer information! 🏎️</small></p>';
+                        
+                        // Submit form to backend
+                        scanForm.submit();
                     });
                 } catch (error) {
                     console.error('Error initializing camera:', error);
