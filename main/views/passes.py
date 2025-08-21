@@ -137,16 +137,43 @@ def index(request):
     passenger_name = None
     if ticket_id:
         # Get the ticket object and extract passenger name
-        ticket_obj = models.Ticket.objects.get(id=ticket_id)
-        active_instance = ticket_obj.active_instance()
-        if isinstance(active_instance, models.VDVTicketInstance):
-            try:
-                vdv_ticket = active_instance.as_ticket()
-                # Extract passenger data from the VDV ticket
-                if hasattr(vdv_ticket.ticket, 'passenger_data') and vdv_ticket.ticket.passenger_data:
-                    passenger_name = vdv_ticket.ticket.passenger_data.forename
-            except Exception as e:
-                print(f"Error extracting passenger name: {e}")
+        try:
+            ticket_obj = models.Ticket.objects.get(id=ticket_id)
+            active_instance = ticket_obj.active_instance()
+            print(f"DEBUG: Ticket type: {ticket_obj.ticket_type}")
+            print(f"DEBUG: Active instance type: {type(active_instance)}")
+            
+            if isinstance(active_instance, models.VDVTicketInstance):
+                print("DEBUG: Processing VDV ticket")
+                try:
+                    vdv_ticket = active_instance.as_ticket()
+                    print(f"DEBUG: VDV ticket parsed successfully")
+                    print(f"DEBUG: Ticket object: {vdv_ticket.ticket}")
+                    
+                    # Check if ticket has passenger_data attribute
+                    if hasattr(vdv_ticket.ticket, 'passenger_data'):
+                        passenger_data = vdv_ticket.ticket.passenger_data
+                        print(f"DEBUG: Passenger data found: {passenger_data}")
+                        if passenger_data and hasattr(passenger_data, 'forename'):
+                            passenger_name = passenger_data.forename
+                            print(f"DEBUG: Extracted forename: {passenger_name}")
+                        else:
+                            print("DEBUG: No forename in passenger data")
+                    else:
+                        print("DEBUG: No passenger_data attribute in VDV ticket")
+                        # Let's see what attributes are available
+                        print(f"DEBUG: Available ticket attributes: {dir(vdv_ticket.ticket)}")
+                        
+                except Exception as e:
+                    print(f"DEBUG: Error extracting passenger name: {e}")
+                    import traceback
+                    traceback.print_exc()
+            else:
+                print(f"DEBUG: Not a VDV ticket instance, type: {type(active_instance)}")
+        except Exception as e:
+            print(f"DEBUG: Error processing ticket: {e}")
+            import traceback
+            traceback.print_exc()
         
         # For FTQoin, don't redirect to ticket view, stay on scanner page
         # return redirect('ticket', pk=ticket_id)
