@@ -263,6 +263,22 @@ body {
     }
 }
 
+/* Settings Icon */
+.settings-icon {
+    transition: all 0.3s ease !important;
+    border-radius: 50% !important;
+    padding: 10px !important;
+    background: linear-gradient(45deg, var(--mario-blue), var(--mario-purple)) !important;
+    border: 3px solid var(--mario-yellow) !important;
+    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3) !important;
+}
+
+.settings-icon:hover {
+    transform: translateY(-50%) rotate(90deg) scale(1.1) !important;
+    background: linear-gradient(45deg, var(--mario-red), var(--mario-orange)) !important;
+    box-shadow: 0 6px 20px rgba(255, 23, 68, 0.4) !important;
+}
+
 /* Special Racing Effects */
 .finish-line {
     background: repeating-linear-gradient(
