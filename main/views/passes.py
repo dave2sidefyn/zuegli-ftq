@@ -88,10 +88,16 @@ def index(request):
     if request.method == "POST":
         print(f"DEBUG: POST data received: {list(request.POST.keys())}")
         if request.POST.get("type") == "scan":
-            try:
-                ticket_bytes = bytes.fromhex(request.POST.get("ticket_hex"))
-            except ValueError:
-                pass
+            ticket_hex = request.POST.get("ticket_hex")
+            print(f"DEBUG: Scan type - hex length: {len(ticket_hex) if ticket_hex else 0}")
+            
+            if ticket_hex:
+                try:
+                    ticket_bytes = bytes.fromhex(ticket_hex)
+                    print(f"DEBUG: Successfully created ticket_bytes from hex")
+                except ValueError as hex_error:
+                    print(f"DEBUG: Error creating ticket_bytes: {hex_error}")
+                    pass
 
             image_form = forms.TicketUploadForm()
         elif request.POST.get("type") == "text":
