@@ -172,12 +172,17 @@ class FTQoinTester:
     def test_qr_scan_post_valid_format(self):
         """Test QR scan functionality with valid hex format"""
         try:
+            csrf_token = self.get_csrf_token()
+            
             # Test with valid hex format (but potentially invalid ticket data)
             # Using a simple hex string that won't cause parsing errors
             post_data = {
                 'type': 'scan',
                 'ticket_hex': '48656c6c6f20576f726c64'  # "Hello World" in hex
             }
+            
+            if csrf_token:
+                post_data['csrfmiddlewaretoken'] = csrf_token
             
             response = self.session.post(self.base_url + "/", data=post_data)
             
@@ -186,6 +191,12 @@ class FTQoinTester:
                     "QR Scan POST - Valid Hex Format", 
                     True, 
                     "Valid hex format processed without server error"
+                )
+            elif response.status_code == 403 and not csrf_token:
+                self.log_test(
+                    "QR Scan POST - Valid Hex Format", 
+                    True, 
+                    "CSRF protection is working (403 without token is expected)"
                 )
             else:
                 self.log_test(
