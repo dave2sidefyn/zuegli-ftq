@@ -167,6 +167,24 @@ def index(request):
                     print(f"DEBUG: Error extracting passenger name: {e}")
                     import traceback
                     traceback.print_exc()
+            elif isinstance(active_instance, models.UICTicketInstance):
+                print("DEBUG: Processing UIC ticket")
+                try:
+                    uic_ticket = active_instance.as_ticket()
+                    print(f"DEBUG: UIC ticket parsed successfully")
+                    # UIC tickets may have passenger information in different structures
+                    if hasattr(uic_ticket, 'data') and uic_ticket.data:
+                        print(f"DEBUG: UIC data found: {type(uic_ticket.data)}")
+                        # Look for passenger name in various UIC data structures
+                        for attr in dir(uic_ticket.data):
+                            if 'name' in attr.lower() or 'passenger' in attr.lower():
+                                value = getattr(uic_ticket.data, attr)
+                                print(f"DEBUG: UIC {attr}: {value}")
+                                if isinstance(value, str) and value:
+                                    passenger_name = value
+                                    break
+                except Exception as e:
+                    print(f"DEBUG: Error processing UIC ticket: {e}")
             else:
                 print(f"DEBUG: Not a VDV ticket instance, type: {type(active_instance)}")
                 if active_instance:
