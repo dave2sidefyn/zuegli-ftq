@@ -136,61 +136,85 @@ def index(request):
     ticket_id, error = process_tickets(request, tickets)
     passenger_name = None
     if ticket_id:
-        # Get the ticket object and extract passenger name
+        # Instead of parsing locally, call zuegli.app API for ticket processing
         try:
-            ticket_obj = models.Ticket.objects.get(id=ticket_id)
-            active_instance = ticket_obj.active_instance()
-            print(f"DEBUG: Ticket type: {ticket_obj.ticket_type}")
-            print(f"DEBUG: Active instance type: {type(active_instance)}")
+            import requests
+            import base64
             
-            if isinstance(active_instance, models.VDVTicketInstance):
-                print("DEBUG: Processing VDV ticket")
-                try:
-                    vdv_ticket = active_instance.as_ticket()
-                    print(f"DEBUG: VDV ticket parsed successfully")
+            # Get the hex ticket data that was just processed
+            if tickets and len(tickets) > 0:
+                ticket_hex = tickets[0].hex()
+                print(f"DEBUG: Using zuegli.app API for ticket processing")
+                print(f"DEBUG: Ticket hex length: {len(ticket_hex)}")
+                
+                # Convert hex to base64 for zuegli.app API
+                ticket_bytes = bytes.fromhex(ticket_hex)
+                ticket_b64 = base64.b64encode(ticket_bytes).decode('utf-8')
+                
+                # Call zuegli.app API
+                api_url = "https://zügli.app/api/upload"
+                payload = {
+                    "barcode_data": ticket_b64
+                }
+                
+                print(f"DEBUG: Calling zuegli.app API...")
+                response = requests.post(api_url, json=payload, timeout=10)
+                print(f"DEBUG: API response status: {response.status_code}")
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    remote_ticket_id = result.get('ticket_id')
+                    access_token = result.get('access_token') 
                     
-                    # Look for PassengerData in the product_data list
-                    if hasattr(vdv_ticket.ticket, 'product_data'):
-                        print(f"DEBUG: Product data found with {len(vdv_ticket.ticket.product_data)} elements")
-                        for element in vdv_ticket.ticket.product_data:
-                            print(f"DEBUG: Element type: {type(element)} - {element}")
-                            if hasattr(element, 'TYPE') and element.TYPE == "passenger-data":
-                                print(f"DEBUG: Found passenger data element: {element}")
-                                if hasattr(element, 'forename'):
-                                    passenger_name = element.forename
-                                    print(f"DEBUG: Extracted forename: {passenger_name}")
-                                    break
-                    else:
-                        print("DEBUG: No product_data attribute in VDV ticket")
+                    print(f"DEBUG: Got ticket_id: {remote_ticket_id}")
+                    
+                    if remote_ticket_id:
+                        # Fetch ticket details from zuegli.app
+                        ticket_url = f"https://zügli.app/ticket/{remote_ticket_id}/"
+                        print(f"DEBUG: Fetching ticket details from: {ticket_url}")
                         
-                except Exception as e:
-                    print(f"DEBUG: Error extracting passenger name: {e}")
-                    import traceback
-                    traceback.print_exc()
-            elif isinstance(active_instance, models.UICTicketInstance):
-                print("DEBUG: Processing UIC ticket")
-                try:
-                    uic_ticket = active_instance.as_ticket()
-                    print(f"DEBUG: UIC ticket parsed successfully")
-                    # UIC tickets may have passenger information in different structures
-                    if hasattr(uic_ticket, 'data') and uic_ticket.data:
-                        print(f"DEBUG: UIC data found: {type(uic_ticket.data)}")
-                        # Look for passenger name in various UIC data structures
-                        for attr in dir(uic_ticket.data):
-                            if 'name' in attr.lower() or 'passenger' in attr.lower():
-                                value = getattr(uic_ticket.data, attr)
-                                print(f"DEBUG: UIC {attr}: {value}")
-                                if isinstance(value, str) and value:
-                                    passenger_name = value
-                                    break
-                except Exception as e:
-                    print(f"DEBUG: Error processing UIC ticket: {e}")
-            else:
-                print(f"DEBUG: Not a VDV ticket instance, type: {type(active_instance)}")
-                if active_instance:
-                    print(f"DEBUG: Available methods on instance: {[m for m in dir(active_instance) if not m.startswith('_')]}")
-        except Exception as e:
-            print(f"DEBUG: Error processing ticket: {e}")
+                        ticket_response = requests.get(ticket_url, timeout=10)
+                        if ticket_response.status_code == 200:
+                            ticket_html = ticket_response.text
+                            
+                            # Parse HTML to extract passenger information
+                            import re
+                            
+                            # Look for passenger name patterns in the HTML
+                            name_patterns = [
+                                r'<strong>Passenger[^<]*</strong>[^<]*<[^>]*>([^<]+)',
+                                r'Passenger[^:]*:\s*([A-Z][a-z]+)',
+                                r'Name[^:]*:\s*([A-Z][a-z]+)',
+                                r'Forename[^:]*:\s*([A-Z][a-z]+)',
+                                r'<td[^>]*>Name</td>\s*<td[^>]*>([^<]+)',
+                                r'<td[^>]*>Passenger</td>\s*<td[^>]*>([^<]+)',
+                            ]
+                            
+                            for pattern in name_patterns:
+                                match = re.search(pattern, ticket_html, re.IGNORECASE)
+                                if match:
+                                    potential_name = match.group(1).strip()
+                                    if potential_name and len(potential_name.split()) >= 1:
+                                        # Extract first name (first word)
+                                        passenger_name = potential_name.split()[0]
+                                        print(f"DEBUG: Extracted passenger name: {passenger_name}")
+                                        break
+                            
+                            if not passenger_name:
+                                print("DEBUG: No passenger name found in ticket HTML")
+                                # Debug: save a snippet of the HTML
+                                print(f"DEBUG: HTML snippet: {ticket_html[:500]}...")
+                        else:
+                            print(f"DEBUG: Failed to fetch ticket details: {ticket_response.status_code}")
+                    
+                elif response.status_code == 422:
+                    error_data = response.json()
+                    print(f"DEBUG: zuegli.app API error: {error_data}")
+                else:
+                    print(f"DEBUG: Unexpected API response: {response.status_code} - {response.text}")
+                    
+        except Exception as api_error:
+            print(f"DEBUG: Error calling zuegli.app API: {api_error}")
             import traceback
             traceback.print_exc()
         
