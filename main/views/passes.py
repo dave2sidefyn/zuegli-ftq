@@ -156,6 +156,9 @@ def index(request):
             
             # Get the hex ticket data that was just processed
             if tickets and len(tickets) > 0:
+                print(f"DEBUG: tickets[0] type: {type(tickets[0])}")
+                print(f"DEBUG: tickets[0] has hex method: {hasattr(tickets[0], 'hex')}")
+                
                 # tickets[0] might be raw bytes, so convert to hex properly
                 if hasattr(tickets[0], 'hex'):
                     ticket_hex = tickets[0].hex()
