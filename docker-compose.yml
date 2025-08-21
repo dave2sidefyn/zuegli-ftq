@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  ftqoin-scanner:
+    build:
+      context: .
+      dockerfile: Dockerfile.local
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount the entire app directory for development
+      - .:/app
+      # Persist database
+      - ftqoin_db:/app/db.sqlite3
+      # Persist static files
+      - ftqoin_static:/app/static
+      - ftqoin_media:/app/media
+    environment:
+      - DJANGO_SETTINGS_MODULE=vdv_pkpass.settings_dev
+      - DEBUG=1
+      - EXTERNAL_URL_BASE=http://localhost:8000
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  ftqoin_db:
+  ftqoin_static:
+  ftqoin_media:
