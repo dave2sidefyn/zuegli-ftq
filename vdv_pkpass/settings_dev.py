@@ -157,7 +157,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-EXTERNAL_URL_BASE = "https://vdv-pkpass.eu.ngrok.io"
+EXTERNAL_URL_BASE = os.getenv('EXTERNAL_URL_BASE', 'https://race-scanner.preview.emergentagent.com')
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = ["gds"]
 CRISPY_TEMPLATE_PACK = "gds"
