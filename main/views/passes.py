@@ -81,10 +81,12 @@ def process_tickets(request, tickets):
 
 
 def index(request):
+    print(f"DEBUG: Index view called with method: {request.method}")
     ticket_bytes = None
     tickets = []
 
     if request.method == "POST":
+        print(f"DEBUG: POST data received: {list(request.POST.keys())}")
         if request.POST.get("type") == "scan":
             try:
                 ticket_bytes = bytes.fromhex(request.POST.get("ticket_hex"))
