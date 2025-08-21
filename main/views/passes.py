@@ -108,6 +108,7 @@ def index(request):
 
             image_form = forms.TicketUploadForm()
         else:
+            # Handle file upload and other forms
             image_form = forms.TicketUploadForm(request.POST, request.FILES)
             if image_form.is_valid():
                 ticket_file = image_form.cleaned_data["ticket"]
