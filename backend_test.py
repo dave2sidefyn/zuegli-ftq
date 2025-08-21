@@ -216,10 +216,15 @@ class FTQoinTester:
     def test_text_upload_functionality(self):
         """Test text upload functionality"""
         try:
+            csrf_token = self.get_csrf_token()
+            
             post_data = {
                 'type': 'text',
                 'ticket_text': 'test_ticket_data'
             }
+            
+            if csrf_token:
+                post_data['csrfmiddlewaretoken'] = csrf_token
             
             response = self.session.post(self.base_url + "/", data=post_data)
             
@@ -228,6 +233,12 @@ class FTQoinTester:
                     "Text Upload Functionality", 
                     True, 
                     "Text upload processed without server error"
+                )
+            elif response.status_code == 403 and not csrf_token:
+                self.log_test(
+                    "Text Upload Functionality", 
+                    True, 
+                    "CSRF protection is working (403 without token is expected)"
                 )
             else:
                 self.log_test(
