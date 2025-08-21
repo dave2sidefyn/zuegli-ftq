@@ -148,21 +148,20 @@ def index(request):
                 try:
                     vdv_ticket = active_instance.as_ticket()
                     print(f"DEBUG: VDV ticket parsed successfully")
-                    print(f"DEBUG: Ticket object: {vdv_ticket.ticket}")
                     
-                    # Check if ticket has passenger_data attribute
-                    if hasattr(vdv_ticket.ticket, 'passenger_data'):
-                        passenger_data = vdv_ticket.ticket.passenger_data
-                        print(f"DEBUG: Passenger data found: {passenger_data}")
-                        if passenger_data and hasattr(passenger_data, 'forename'):
-                            passenger_name = passenger_data.forename
-                            print(f"DEBUG: Extracted forename: {passenger_name}")
-                        else:
-                            print("DEBUG: No forename in passenger data")
+                    # Look for PassengerData in the product_data list
+                    if hasattr(vdv_ticket.ticket, 'product_data'):
+                        print(f"DEBUG: Product data found with {len(vdv_ticket.ticket.product_data)} elements")
+                        for element in vdv_ticket.ticket.product_data:
+                            print(f"DEBUG: Element type: {type(element)} - {element}")
+                            if hasattr(element, 'TYPE') and element.TYPE == "passenger-data":
+                                print(f"DEBUG: Found passenger data element: {element}")
+                                if hasattr(element, 'forename'):
+                                    passenger_name = element.forename
+                                    print(f"DEBUG: Extracted forename: {passenger_name}")
+                                    break
                     else:
-                        print("DEBUG: No passenger_data attribute in VDV ticket")
-                        # Let's see what attributes are available
-                        print(f"DEBUG: Available ticket attributes: {dir(vdv_ticket.ticket)}")
+                        print("DEBUG: No product_data attribute in VDV ticket")
                         
                 except Exception as e:
                     print(f"DEBUG: Error extracting passenger name: {e}")
@@ -170,6 +169,8 @@ def index(request):
                     traceback.print_exc()
             else:
                 print(f"DEBUG: Not a VDV ticket instance, type: {type(active_instance)}")
+                if active_instance:
+                    print(f"DEBUG: Available methods on instance: {[m for m in dir(active_instance) if not m.startswith('_')]}")
         except Exception as e:
             print(f"DEBUG: Error processing ticket: {e}")
             import traceback
