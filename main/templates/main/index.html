@@ -5,7 +5,12 @@
 
 {% block content %}
     <div class="govuk-width-container">
-        <h1 class="govuk-heading-xl">🏁 FTQoin Racing Scanner 🏎️</h1>
+        <h1 class="govuk-heading-xl" style="position: relative; display: flex; align-items: center; justify-content: center;">
+            🏁 FTQoin Racing Scanner 🏎️
+            <a href="{% url 'settings' %}" class="settings-icon" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); text-decoration: none; font-size: 2rem;" title="Settings">
+                ⚙️
+            </a>
+        </h1>
 
         {% if error %}
             <div class="govuk-error-summary" data-module="govuk-error-summary">
