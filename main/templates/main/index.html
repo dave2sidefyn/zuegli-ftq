@@ -300,7 +300,17 @@
                 }
             }
 
-            window.addEventListener('load', barkoderInit);
+            window.addEventListener('load', function() {
+                // Check if we already have ticket identified from backend
+                {% if ticket_identified %}
+                    // Ticket was already processed by backend, show product selection
+                    hexTicket = "backend_processed"; // Mark as processed by backend
+                    displayProductsGrid();
+                {% else %}
+                    // Initialize scanner
+                    barkoderInit();
+                {% endif %}
+            });
         </script>
     </div>
 {% endblock content %}
