@@ -134,8 +134,22 @@ def index(request):
         tickets = [ticket_bytes]
 
     ticket_id, error = process_tickets(request, tickets)
+    passenger_name = None
     if ticket_id:
-        return redirect('ticket', pk=ticket_id)
+        # Get the ticket object and extract passenger name
+        ticket_obj = models.Ticket.objects.get(id=ticket_id)
+        active_instance = ticket_obj.active_instance()
+        if isinstance(active_instance, models.VDVTicketInstance):
+            try:
+                vdv_ticket = active_instance.as_ticket()
+                # Extract passenger data from the VDV ticket
+                if hasattr(vdv_ticket.ticket, 'passenger_data') and vdv_ticket.ticket.passenger_data:
+                    passenger_name = vdv_ticket.ticket.passenger_data.forename
+            except Exception as e:
+                print(f"Error extracting passenger name: {e}")
+        
+        # For FTQoin, don't redirect to ticket view, stay on scanner page
+        # return redirect('ticket', pk=ticket_id)
 
     return render(request, "main/index.html", {
         "image_form": image_form,
